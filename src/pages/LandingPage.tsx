@@ -75,16 +75,14 @@ export default function LandingPage() {
           </a>
         </div>
 
-        {/* Social proof */}
-        <div className="fade-up mt-12 flex items-center justify-center gap-4" style={{ animationDelay: '0.2s' }}>
-          <div className="flex -space-x-2">
-            {['#CBD5E1','#94A3B8','#64748B','#475569','#334155'].map((color, i) => (
-              <div key={i} className="h-8 w-8 rounded-full border-2 border-white ring-1 ring-slate-100" style={{ backgroundColor: color }} />
-            ))}
-          </div>
-          <span className="text-sm text-slate-500">
-            Powering <span className="font-semibold text-slate-700">co-working spaces</span> across Metro Manila
-          </span>
+        {/* Tagline strip */}
+        <div className="fade-up mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-400" style={{ animationDelay: '0.2s' }}>
+          {['No long-term contracts', 'Set up in a day', 'Built for PH operators'].map(t => (
+            <span key={t} className="flex items-center gap-1.5">
+              <Icon name="Check" size={13} className="text-emerald-500" strokeWidth={2.5} />
+              {t}
+            </span>
+          ))}
         </div>
       </section>
 
@@ -217,14 +215,16 @@ export default function LandingPage() {
           {/* Starter */}
           <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-soft">
             <div className="mb-1 text-sm font-semibold uppercase tracking-widest text-slate-400">Starter</div>
-            <div className="mb-1 font-serif text-5xl text-slate-900">Free</div>
-            <div className="mb-6 text-sm text-slate-400">forever · up to 1 location</div>
+            <div className="mb-1 font-serif text-5xl text-slate-900">₱1,200</div>
+            <div className="mb-6 text-sm text-slate-400">per month · 1 site</div>
             <ul className="mb-8 space-y-3 text-sm text-slate-600">
               {[
-                'Up to 10 bookable spaces',
+                '1 co-working location',
+                'Up to 50 customers',
+                '+₱100 per additional 20 customers',
+                'Real-time booking & floor map',
+                'Payment confirmation flow',
                 'Client & admin accounts',
-                'Basic booking flow',
-                'Manual payment confirmation',
               ].map(f => (
                 <li key={f} className="flex items-center gap-2">
                   <Icon name="Check" size={15} className="shrink-0 text-emerald-500" strokeWidth={2.5} />
@@ -236,7 +236,7 @@ export default function LandingPage() {
               to="/contact"
               className="block rounded-full border border-slate-200 bg-white py-3 text-center font-semibold text-slate-700 transition-colors hover:border-slate-900"
             >
-              Get started free
+              Get started
             </Link>
           </div>
 
@@ -246,13 +246,14 @@ export default function LandingPage() {
               <span className="rounded-full bg-amber-500 px-4 py-1 text-xs font-bold text-white">Most popular</span>
             </div>
             <div className="mb-1 text-sm font-semibold uppercase tracking-widest text-amber-500">Growth</div>
-            <div className="mb-1 font-serif text-5xl text-slate-900">₱1,999</div>
-            <div className="mb-6 text-sm text-slate-400">per month · 1 location</div>
+            <div className="mb-1 font-serif text-5xl text-slate-900">₱2,300</div>
+            <div className="mb-6 text-sm text-slate-400">per month · up to 3 sites</div>
             <ul className="mb-8 space-y-3 text-sm text-slate-600">
               {[
-                'Unlimited bookable spaces',
-                'Real-time floor map',
-                'Payment tracking & timers',
+                'Up to 3 co-working locations',
+                'Up to 200 customers',
+                '+₱100 per additional 20 customers',
+                'Everything in Starter',
                 'Occupancy analytics',
                 'Priority support',
               ].map(f => (
@@ -274,10 +275,11 @@ export default function LandingPage() {
           <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-soft">
             <div className="mb-1 text-sm font-semibold uppercase tracking-widest text-slate-400">Enterprise</div>
             <div className="mb-1 font-serif text-5xl text-slate-900">Custom</div>
-            <div className="mb-6 text-sm text-slate-400">multiple locations · white-label</div>
+            <div className="mb-6 text-sm text-slate-400">unlimited sites · white-label</div>
             <ul className="mb-8 space-y-3 text-sm text-slate-600">
               {[
-                'Multi-location dashboard',
+                'Unlimited locations',
+                'Unlimited customers',
                 'Custom domain & branding',
                 'API access',
                 'Dedicated onboarding',

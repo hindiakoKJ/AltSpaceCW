@@ -155,10 +155,10 @@ export default function PrivacyPage() {
               <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
                 <div className="text-sm font-semibold text-slate-900">HNSCorpPH — Privacy Team</div>
                 <a
-                  href="mailto:privacy@hnscorpph.com"
+                  href="mailto:hnscorpph@gmail.com"
                   className="mt-1 text-sm text-amber-600 hover:text-amber-500 transition-colors"
                 >
-                  privacy@hnscorpph.com
+                  hnscorpph@gmail.com
                 </a>
               </div>
               <p className="text-sm text-slate-400">
