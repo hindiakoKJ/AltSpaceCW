@@ -99,14 +99,14 @@ export function buildSeedOccupancy(): OccupancyMap {
 export function buildSeedBookings(): Booking[] {
   return [
     // Upcoming
-    { id: 'b-up1', space: ALL_SPACES.find(s => s.id === 'DD-04')!,    date: dateKey(addDays(TODAY, 1)), start: 9,  end: 17, price: 45, status: 'upcoming' },
-    { id: 'b-up2', space: ALL_SPACES.find(s => s.id === 'RM-ATLAS')!, date: dateKey(addDays(TODAY, 3)), start: 14, end: 16, price: 50, status: 'upcoming' },
-    { id: 'b-up3', space: ALL_SPACES.find(s => s.id === 'HD-07')!,    date: dateKey(addDays(TODAY, 6)), start: 9,  end: 17, price: 25, status: 'upcoming' },
+    { id: 'b-up1', space: ALL_SPACES.find(s => s.id === 'DD-04')!,    date: dateKey(addDays(TODAY, 1)), start: 9,  end: 17, price: 45, status: 'upcoming', payment_status: 'confirmed', client_deadline: null, admin_deadline: null },
+    { id: 'b-up2', space: ALL_SPACES.find(s => s.id === 'RM-ATLAS')!, date: dateKey(addDays(TODAY, 3)), start: 14, end: 16, price: 50, status: 'upcoming', payment_status: 'confirmed', client_deadline: null, admin_deadline: null },
+    { id: 'b-up3', space: ALL_SPACES.find(s => s.id === 'HD-07')!,    date: dateKey(addDays(TODAY, 6)), start: 9,  end: 17, price: 25, status: 'upcoming', payment_status: 'confirmed', client_deadline: null, admin_deadline: null },
     // Past
-    { id: 'b-p1', space: ALL_SPACES.find(s => s.id === 'HD-04')!,     date: dateKey(addDays(TODAY, -2)),  start: 9,  end: 17, price: 25, status: 'past' },
-    { id: 'b-p2', space: ALL_SPACES.find(s => s.id === 'DD-04')!,     date: dateKey(addDays(TODAY, -5)),  start: 9,  end: 18, price: 45, status: 'past' },
-    { id: 'b-p3', space: ALL_SPACES.find(s => s.id === 'RM-MERCER')!, date: dateKey(addDays(TODAY, -7)),  start: 10, end: 12, price: 44, status: 'past' },
-    { id: 'b-p4', space: ALL_SPACES.find(s => s.id === 'HD-09')!,     date: dateKey(addDays(TODAY, -12)), start: 9,  end: 13, price: 20, status: 'past' },
-    { id: 'b-p5', space: ALL_SPACES.find(s => s.id === 'HD-11')!,     date: dateKey(addDays(TODAY, -18)), start: 9,  end: 17, price: 25, status: 'past' },
+    { id: 'b-p1', space: ALL_SPACES.find(s => s.id === 'HD-04')!,     date: dateKey(addDays(TODAY, -2)),  start: 9,  end: 17, price: 25, status: 'past', payment_status: 'confirmed', client_deadline: null, admin_deadline: null },
+    { id: 'b-p2', space: ALL_SPACES.find(s => s.id === 'DD-04')!,     date: dateKey(addDays(TODAY, -5)),  start: 9,  end: 18, price: 45, status: 'past', payment_status: 'confirmed', client_deadline: null, admin_deadline: null },
+    { id: 'b-p3', space: ALL_SPACES.find(s => s.id === 'RM-MERCER')!, date: dateKey(addDays(TODAY, -7)),  start: 10, end: 12, price: 44, status: 'past', payment_status: 'confirmed', client_deadline: null, admin_deadline: null },
+    { id: 'b-p4', space: ALL_SPACES.find(s => s.id === 'HD-09')!,     date: dateKey(addDays(TODAY, -12)), start: 9,  end: 13, price: 20, status: 'past', payment_status: 'confirmed', client_deadline: null, admin_deadline: null },
+    { id: 'b-p5', space: ALL_SPACES.find(s => s.id === 'HD-11')!,     date: dateKey(addDays(TODAY, -18)), start: 9,  end: 17, price: 25, status: 'past', payment_status: 'confirmed', client_deadline: null, admin_deadline: null },
   ]
 }
