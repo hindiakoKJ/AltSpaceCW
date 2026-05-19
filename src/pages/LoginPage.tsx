@@ -88,6 +88,8 @@ export default function LoginPage() {
               <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Workspace ID</label>
               <input
                 type="text"
+                name="workspace-id"
+                autoComplete="organization"
                 value={workspace}
                 onChange={e => setWorkspace(e.target.value)}
                 required={mode === 'signup'}
