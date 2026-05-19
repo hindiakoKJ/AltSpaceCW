@@ -29,11 +29,12 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 async function loadProfile(userId: string): Promise<Profile | null> {
-  const { data } = await sb
+  const { data, error } = await sb
     .from('profiles')
     .select('*, tenant:tenants(id, name, slug, status)')
     .eq('id', userId)
     .single()
+  if (error) console.error('[loadProfile]', error.message, 'userId:', userId)
   return (data as Profile | null)
 }
 
@@ -78,6 +79,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user)
     setProfile(p)
     setLoading(false)
+    if (!p) {
+      return { error: new Error('Profile not found. Contact your administrator.'), profile: null }
+    }
     return { error: null, profile: p }
   }
 
