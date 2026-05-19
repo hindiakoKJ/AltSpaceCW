@@ -8,4 +8,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY — check your .env.local file.')
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient<Database>(
+  supabaseUrl  || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-anon-key'
+)
