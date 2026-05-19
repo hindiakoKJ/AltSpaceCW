@@ -126,7 +126,7 @@ export default function LandingPage() {
             {
               icon: 'LayoutGrid',
               title: 'Real-time floor map',
-              body: 'See exactly who's sitting where, which desks are available, and flag spaces for maintenance — all updated live.',
+              body: "See exactly who's sitting where, which desks are available, and flag spaces for maintenance — all updated live.",
               accent: 'bg-amber-50 text-amber-600',
             },
             {
