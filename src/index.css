@@ -1,0 +1,60 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
+
+/* Override Tailwind's serif stack → Instrument Serif */
+@theme {
+  --font-serif: 'Instrument Serif', Georgia, serif;
+}
+
+/* Page background — warm cream */
+body {
+  background-color: #f6f4ef;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Custom utilities ─────────────────────────────────────────── */
+@layer utilities {
+  /* Instrument Serif italic accent */
+  .serif-italic {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-style: italic;
+  }
+
+  /* Hide scrollbar cross-browser */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Subtle card shadows matching the prototype */
+  .shadow-soft {
+    box-shadow:
+      0 1px 3px rgba(15, 23, 42, 0.06),
+      0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  .shadow-soft-lg {
+    box-shadow:
+      0 4px 24px rgba(15, 23, 42, 0.10),
+      0 1px 4px  rgba(15, 23, 42, 0.06);
+  }
+
+  /* Entry animation */
+  .fade-up {
+    animation: fadeUp 0.4s ease both;
+  }
+
+  /* Live-status pulse dot */
+  .pulse-dot {
+    animation: pulseDot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+/* ─── Keyframes ────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1;   }
+  50%       { opacity: 0.4; }
+}
