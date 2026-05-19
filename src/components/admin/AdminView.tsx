@@ -151,11 +151,10 @@ function BreakdownCard({ type, day }: { type: string; day: Record<string, { main
 const HOURS_RANGE = Array.from({ length: 14 }, (_, i) => i + 8) // 8 AM – 9 PM
 
 function SpaceDetailModal({
-  space, slot, dKey, onToggleMaintenance, onClose,
+  space, slot, onToggleMaintenance, onClose,
 }: {
   space: Space
   slot?: { start?: number; end?: number; maintenance?: true }
-  dKey: string
   onToggleMaintenance: () => void
   onClose: () => void
 }) {
@@ -251,11 +250,10 @@ function SpaceDetailModal({
 /* ── Inventory tile ───────────────────────────────────────────────── */
 
 function InventoryTile({
-  space, slot, onToggleMaintenance, onClick,
+  space, slot, onClick,
 }: {
   space: Space
   slot?: { start?: number; end?: number; maintenance?: true }
-  onToggleMaintenance: () => void
   onClick: () => void
 }) {
   const isMaint  = !!(slot?.maintenance)
@@ -610,7 +608,6 @@ export function AdminView() {
                         key={s.id}
                         space={s}
                         slot={day[s.id]}
-                        onToggleMaintenance={() => app.toggleMaintenance(s.id, dKey)}
                         onClick={() => setSelectedSpace(s)}
                       />
                     ))}
@@ -633,8 +630,7 @@ export function AdminView() {
         <SpaceDetailModal
           space={selectedSpace}
           slot={day[selectedSpace.id]}
-          dKey={dKey}
-          onToggleMaintenance={() => app.toggleMaintenance(selectedSpace.id, dKey)}
+          onToggleMaintenance={() => { app.toggleMaintenance(selectedSpace.id, dKey); setSelectedSpace(null) }}
           onClose={() => setSelectedSpace(null)}
         />
       )}
