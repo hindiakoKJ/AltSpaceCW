@@ -112,7 +112,7 @@ export default function ContactPage() {
                 <div>
                   <div className="font-semibold text-slate-900">Our location</div>
                   <div className="mt-0.5 text-sm leading-relaxed text-slate-500">
-                    BGC, Taguig, Metro Manila<br />
+                    Naga, Camarines Sur<br />
                     Philippines
                   </div>
                 </div>
