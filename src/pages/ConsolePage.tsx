@@ -45,6 +45,16 @@ export default function ConsolePage() {
   const [assignRole,      setAssignRole]      = useState('client')
   const [assigning,       setAssigning]       = useState(false)
 
+  // Create user modal
+  const [showCreateUser,    setShowCreateUser]    = useState(false)
+  const [cuFullName,        setCuFullName]        = useState('')
+  const [cuEmail,           setCuEmail]           = useState('')
+  const [cuPassword,        setCuPassword]        = useState('')
+  const [cuTenantId,        setCuTenantId]        = useState('')
+  const [cuRole,            setCuRole]            = useState('client')
+  const [cuSaving,          setCuSaving]          = useState(false)
+  const [cuError,           setCuError]           = useState('')
+
   useEffect(() => { loadAll() }, [])
 
   async function loadAll() {
@@ -78,6 +88,46 @@ export default function ConsolePage() {
   async function toggleStatus(tenant: Tenant) {
     const next = tenant.status === 'active' ? 'suspended' : 'active'
     await sb.from('tenants').update({ status: next }).eq('id', tenant.id)
+    loadAll()
+  }
+
+  async function createUser() {
+    if (!cuFullName.trim() || !cuEmail.trim() || !cuPassword.trim()) {
+      setCuError('Full name, email, and password are required.')
+      return
+    }
+    if (cuPassword.length < 6) {
+      setCuError('Password must be at least 6 characters.')
+      return
+    }
+    setCuSaving(true)
+    setCuError('')
+
+    const { data, error } = await sb.functions.invoke('create-user', {
+      body: {
+        email:     cuEmail.trim(),
+        password:  cuPassword,
+        full_name: cuFullName.trim(),
+        tenant_id: cuTenantId || null,
+        role:      cuRole,
+      },
+    })
+
+    setCuSaving(false)
+
+    if (error) {
+      setCuError(error.message ?? 'Failed to create user')
+      return
+    }
+    if (data?.error) {
+      setCuError(data.error)
+      return
+    }
+
+    // Success — close and refresh
+    setShowCreateUser(false)
+    setCuFullName(''); setCuEmail(''); setCuPassword('')
+    setCuTenantId(''); setCuRole('client'); setCuError('')
     loadAll()
   }
 
@@ -219,9 +269,18 @@ export default function ConsolePage() {
         {/* ── USERS TAB ──────────────────────────────────────── */}
         {tab === 'users' && (
           <>
-            <div className="mb-3">
-              <h2 className="font-serif text-xl text-white">Users</h2>
-              <p className="mt-1 text-sm text-white/40">Assign users to tenants and set their roles.</p>
+            <div className="mb-3 flex items-start justify-between">
+              <div>
+                <h2 className="font-serif text-xl text-white">Users</h2>
+                <p className="mt-1 text-sm text-white/40">Assign users to tenants and set their roles.</p>
+              </div>
+              <button
+                onClick={() => setShowCreateUser(true)}
+                className="flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-amber-400"
+              >
+                <Icon name="Plus" size={14} />
+                Create user
+              </button>
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-white/10">
@@ -328,6 +387,93 @@ export default function ConsolePage() {
                 className="flex-1 rounded-xl bg-amber-500 py-3 text-sm font-semibold text-slate-900 hover:bg-amber-400 disabled:opacity-50"
               >
                 {saving ? 'Creating…' : 'Create tenant'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Create User Modal ──────────────────────────────── */}
+      {showCreateUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 p-8">
+            <h2 className="font-serif text-xl text-white">Create user</h2>
+            <p className="mt-1 text-sm text-white/50">New user will be able to log in immediately.</p>
+
+            <div className="mt-6 space-y-4">
+              <div>
+                <label className="text-[11px] font-medium uppercase tracking-wider text-white/40">Full name</label>
+                <input
+                  value={cuFullName}
+                  onChange={e => setCuFullName(e.target.value)}
+                  placeholder="Jane Santos"
+                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-white/20"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium uppercase tracking-wider text-white/40">Email</label>
+                <input
+                  value={cuEmail}
+                  onChange={e => setCuEmail(e.target.value)}
+                  type="email"
+                  placeholder="jane@example.com"
+                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-white/20"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium uppercase tracking-wider text-white/40">Password <span className="normal-case text-white/20">(min 6 chars)</span></label>
+                <input
+                  value={cuPassword}
+                  onChange={e => setCuPassword(e.target.value)}
+                  type="password"
+                  placeholder="••••••••"
+                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-white/20"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium uppercase tracking-wider text-white/40">Tenant</label>
+                <select
+                  value={cuTenantId}
+                  onChange={e => setCuTenantId(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-white/20"
+                >
+                  <option value="">— None (unassigned)</option>
+                  {tenants.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-[11px] font-medium uppercase tracking-wider text-white/40">Role</label>
+                <select
+                  value={cuRole}
+                  onChange={e => setCuRole(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-white/20"
+                >
+                  <option value="client">Client</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              {cuError && <p className="rounded-xl bg-rose-500/10 px-4 py-3 text-sm text-rose-400">{cuError}</p>}
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => {
+                  setShowCreateUser(false)
+                  setCuFullName(''); setCuEmail(''); setCuPassword('')
+                  setCuTenantId(''); setCuRole('client'); setCuError('')
+                }}
+                className="flex-1 rounded-xl border border-white/10 py-3 text-sm text-white/60 hover:border-white/20"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={createUser}
+                disabled={cuSaving}
+                className="flex-1 rounded-xl bg-amber-500 py-3 text-sm font-semibold text-slate-900 hover:bg-amber-400 disabled:opacity-50"
+              >
+                {cuSaving ? 'Creating…' : 'Create user'}
               </button>
             </div>
           </div>
