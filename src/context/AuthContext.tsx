@@ -21,12 +21,21 @@ interface AuthContextValue {
   user:     User | null
   profile:  Profile | null
   loading:  boolean
-  signIn:   (email: string, password: string) => Promise<{ error: Error | null }>
+  signIn:   (email: string, password: string) => Promise<{ error: Error | null; profile: Profile | null }>
   signUp:   (email: string, password: string, fullName: string, tenantSlug?: string) => Promise<{ error: Error | null }>
   signOut:  () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+
+async function loadProfile(userId: string): Promise<Profile | null> {
+  const { data } = await sb
+    .from('profiles')
+    .select('*, tenant:tenants(id, name, slug, status)')
+    .eq('id', userId)
+    .single()
+  return (data as Profile | null)
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
@@ -34,40 +43,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Restore session on mount
   useEffect(() => {
     supabase.auth.getSession()
-      .then(({ data: { session } }) => {
+      .then(async ({ data: { session } }) => {
         setSession(session)
         setUser(session?.user ?? null)
-        if (session?.user) fetchProfile(session.user.id)
-        else setLoading(false)
+        if (session?.user) {
+          const p = await loadProfile(session.user.id)
+          setProfile(p)
+        }
+        setLoading(false)
       })
       .catch(() => setLoading(false))
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Keep session in sync (token refresh, sign-out from another tab)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
-      else { setProfile(null); setLoading(false) }
+      if (!session) {
+        setProfile(null)
+      }
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
-  async function fetchProfile(userId: string) {
-    setLoading(true)
-    const { data } = await sb
-      .from('profiles')
-      .select('*, tenant:tenants(id, name, slug, status)')
-      .eq('id', userId)
-      .single()
-    setProfile(data as Profile | null)
-    setLoading(false)
-  }
-
   async function signIn(email: string, password: string) {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error: error as Error | null }
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) return { error: error as Error, profile: null }
+
+    const p = await loadProfile(data.user.id)
+    setSession(data.session)
+    setUser(data.user)
+    setProfile(p)
+    setLoading(false)
+    return { error: null, profile: p }
   }
 
   async function signUp(email: string, password: string, fullName: string, tenantSlug?: string) {
@@ -86,6 +97,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signOut() {
     await supabase.auth.signOut()
+    setProfile(null)
+    setSession(null)
+    setUser(null)
   }
 
   return (

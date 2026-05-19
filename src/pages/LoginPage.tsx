@@ -22,10 +22,18 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const { error } = await signIn(email, password)
+    const { error, profile } = await signIn(email, password)
     setLoading(false)
     if (error) {
       setError(error.message)
+      return
+    }
+    if (profile?.role === 'console') {
+      navigate('/console', { replace: true })
+    } else if (profile?.role === 'admin' && profile.tenant?.slug) {
+      navigate(`/${profile.tenant.slug}/admin`, { replace: true })
+    } else if (profile?.tenant?.slug) {
+      navigate(`/${profile.tenant.slug}`, { replace: true })
     } else {
       navigate('/', { replace: true })
     }
