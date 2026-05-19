@@ -20,7 +20,7 @@ export function TopNav() {
   const { user, profile, signOut } = useAuth()
   const { tenant } = useTenant()
   const navigate  = useNavigate()
-  const tabs = app.userRole === 'admin' ? [...CLIENT_TABS, ADMIN_TAB] : CLIENT_TABS
+  const tabs = app.userRole === 'admin' ? [ADMIN_TAB] : CLIENT_TABS
   const displayName = profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'You'
 
   return (

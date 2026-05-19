@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { Space } from '../../types/app'
 import { useApp } from '../../context/AppContext'
+import { useAuth } from '../../context/AuthContext'
 import { TODAY, DAYS, MONTHS, addDays, dateKey, sameDay, fmtRange } from '../../lib/dateHelpers'
 import { useDragScroll } from '../../hooks/useDragScroll'
 import { Pill } from '../ui/Pill'
@@ -40,6 +41,8 @@ const HOURS = Array.from({ length: 12 }, (_, i) => 8 + i) // 8..19
 
 export function BookingView() {
   const app = useApp()
+  const { profile } = useAuth()
+  const firstName = profile?.full_name?.split(' ')[0] || profile?.email?.split('@')[0] || 'there'
 
   const [selectedDate, setSelectedDate] = useState<Date>(TODAY)
   const [filter,       setFilter]       = useState<FilterType>('all')
@@ -143,7 +146,7 @@ export function BookingView() {
               AltSpaceCW open · 8:00 AM – 10:00 PM
             </div>
             <h1 className="mt-3 text-[64px] leading-[1.05] tracking-tight text-slate-900">
-              Good morning, <span className="serif-italic text-amber-700">Maya.</span>
+              Good morning, <span className="serif-italic text-amber-700">{firstName}.</span>
               <br />
               Let&rsquo;s find you <span className="serif-italic text-slate-700">a good seat.</span>
             </h1>
