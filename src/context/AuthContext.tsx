@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   async function fetchProfile(userId: string) {
+    setLoading(true)
     const { data } = await sb
       .from('profiles')
       .select('*, tenant:tenants(id, name, slug, status)')
