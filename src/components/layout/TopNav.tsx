@@ -83,7 +83,7 @@ export function TopNav() {
               <Icon name="ChevronDown" size={14} className="text-slate-400" />
             </button>
             <div className="absolute right-0 top-full mt-1.5 hidden w-48 rounded-2xl border border-slate-200 bg-white py-1.5 shadow-lg group-focus-within:block group-hover:block">
-              {profile?.role === 'admin' && (
+              {profile?.role === 'console' && (
                 <button
                   onClick={() => navigate('/console')}
                   className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-stone-50"
