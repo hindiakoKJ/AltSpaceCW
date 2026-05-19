@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import type { Space } from '../../types/app'
 import { useApp } from '../../context/AppContext'
 import { ALL_SPACES, MEMBERS, TYPE_META } from '../../lib/mockData'
@@ -146,98 +146,157 @@ function BreakdownCard({ type, day }: { type: string; day: Record<string, { main
   )
 }
 
+/* ── Space detail modal ───────────────────────────────────────────── */
+
+const HOURS_RANGE = Array.from({ length: 14 }, (_, i) => i + 8) // 8 AM – 9 PM
+
+function SpaceDetailModal({
+  space, slot, dKey, onToggleMaintenance, onClose,
+}: {
+  space: Space
+  slot?: { start?: number; end?: number; maintenance?: true }
+  dKey: string
+  onToggleMaintenance: () => void
+  onClose: () => void
+}) {
+  const isMaint  = !!(slot?.maintenance)
+  const isBooked = !isMaint && slot !== undefined
+  const isRoom   = space.type === 'room'
+
+  function hourStatus(h: number): 'booked' | 'free' | 'maint' {
+    if (isMaint) return 'maint'
+    if (isBooked && slot && h >= (slot.start ?? 0) && h < (slot.end ?? 0)) return 'booked'
+    return 'free'
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center" onClick={onClose}>
+      <div
+        className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-xl"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="font-serif text-2xl text-slate-900">{space.label}</div>
+            <div className="mt-0.5 text-xs uppercase tracking-wider text-slate-400">
+              {TYPE_META[space.type].label}
+              {isRoom && space.capacity ? ` · ${space.capacity} people` : ''}
+              {' · '}{space.zone}
+            </div>
+          </div>
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-stone-100">
+            <Icon name="X" size={16} />
+          </button>
+        </div>
+
+        {/* Status badge */}
+        <div className="mt-4">
+          {isMaint ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600">
+              <Icon name="Wrench" size={13} /> Under maintenance
+            </span>
+          ) : isBooked && slot ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700">
+              <span className="h-2 w-2 rounded-full bg-amber-500" />
+              Reserved {fmtHourShort(slot.start ?? 0)} – {fmtHourShort(slot.end ?? 0)}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" /> Available all day
+            </span>
+          )}
+        </div>
+
+        {/* Hourly timeline */}
+        <div className="mt-5">
+          <div className="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-400">Hourly schedule</div>
+          <div className="flex gap-0.5">
+            {HOURS_RANGE.map(h => {
+              const s = hourStatus(h)
+              return (
+                <div key={h} className="flex flex-1 flex-col items-center gap-1">
+                  <div className={`h-8 w-full rounded-md ${
+                    s === 'booked' ? 'bg-amber-400'
+                    : s === 'maint' ? 'bg-slate-200'
+                    : 'bg-emerald-100'
+                  }`} />
+                  <span className="text-[9px] text-slate-400">{h <= 12 ? h : h - 12}</span>
+                </div>
+              )
+            })}
+          </div>
+          <div className="mt-2 flex items-center gap-4 text-[10px] text-slate-400">
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-emerald-100 border border-emerald-200" /> Free</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-amber-400" /> Reserved</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-slate-200" /> Maintenance</span>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="mt-5 flex gap-2">
+          <button
+            onClick={() => { onToggleMaintenance(); onClose() }}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 py-2.5 text-sm text-slate-700 hover:bg-stone-50"
+          >
+            <Icon name="Wrench" size={14} />
+            {isMaint ? 'Mark available' : 'Mark maintenance'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ── Inventory tile ───────────────────────────────────────────────── */
 
 function InventoryTile({
-  space, slot, onToggleMaintenance,
+  space, slot, onToggleMaintenance, onClick,
 }: {
   space: Space
-  slot?: { memberIdx?: number; start?: number; end?: number; maintenance?: true }
+  slot?: { start?: number; end?: number; maintenance?: true }
   onToggleMaintenance: () => void
+  onClick: () => void
 }) {
-  const [open, setOpen] = useState(false)
-  const popRef          = useRef<HTMLDivElement>(null)
-
-  const member      = slot && !slot.maintenance && slot.memberIdx !== undefined ? MEMBERS[slot.memberIdx] : null
-  const isMaint     = !!(slot?.maintenance)
-  const isRoom      = space.type === 'room'
+  const isMaint  = !!(slot?.maintenance)
+  const isBooked = !isMaint && slot !== undefined
+  const isRoom   = space.type === 'room'
 
   const baseCls = isMaint
     ? 'border-slate-200 bg-stone-100'
-    : member
+    : isBooked
     ? 'border-amber-200 bg-amber-50/70'
-    : 'border-slate-200 bg-white'
+    : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-soft'
 
   return (
-    <div className={`relative rounded-2xl border ${baseCls} p-3 transition`}>
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="font-serif text-xl text-slate-900">
-            {isRoom ? space.label : space.id.split('-')[1]}
-          </div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400">
-            {isRoom ? `${TYPE_META[space.type].label} · ${space.capacity}p` : TYPE_META[space.type].label}
-          </div>
-        </div>
-        <button
-          onClick={() => setOpen(v => !v)}
-          className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-stone-200 hover:text-slate-700"
-        >
-          <Icon name="MoreHorizontal" size={14} />
-        </button>
+    <button
+      onClick={onClick}
+      className={`relative w-full rounded-2xl border ${baseCls} p-3 text-left transition`}
+    >
+      <div className="font-serif text-xl text-slate-900">
+        {isRoom ? space.label : space.id.split('-')[1]}
+      </div>
+      <div className="text-[10px] uppercase tracking-wider text-slate-400">
+        {isRoom ? `${TYPE_META[space.type].label} · ${space.capacity}p` : TYPE_META[space.type].label}
       </div>
 
-      <div className="mt-2 flex items-center gap-2">
+      <div className="mt-2">
         {isMaint ? (
           <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-700">
             <Icon name="Wrench" size={10} /> Maintenance
           </div>
-        ) : member ? (
-          <>
-            <Avatar member={member} size={20} />
-            <div className="truncate text-[11px] font-medium text-slate-900">{member.name.split(' ')[0]}</div>
-          </>
+        ) : isBooked && slot ? (
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            Reserved {fmtHourShort(slot.start ?? 0)}–{fmtHourShort(slot.end ?? 0)}
+          </div>
         ) : (
           <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Available
           </div>
         )}
       </div>
-
-      {member && slot && (
-        <div className="mt-1 font-mono text-[10px] text-slate-500">
-          {fmtHourShort(slot.start ?? 0)} – {fmtHourShort(slot.end ?? 0)}
-        </div>
-      )}
-
-      {open && (
-        <div
-          ref={popRef}
-          className="absolute right-2 top-9 z-10 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-soft-lg"
-        >
-          <div className="border-b border-slate-100 px-3 py-2 text-[11px] uppercase tracking-wider text-slate-500">
-            {space.label} · {space.id}
-          </div>
-          <button
-            onClick={() => { onToggleMaintenance(); setOpen(false) }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-900 hover:bg-stone-50"
-          >
-            <Icon name="Wrench" size={14} className="text-slate-500" />
-            {isMaint ? 'Mark available' : 'Mark maintenance'}
-          </button>
-          {member && (
-            <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-900 hover:bg-stone-50">
-              <Icon name="MessageCircle" size={14} className="text-slate-500" />
-              Message {member.name.split(' ')[0]}
-            </button>
-          )}
-          <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-900 hover:bg-stone-50">
-            <Icon name="History" size={14} className="text-slate-500" />
-            View history
-          </button>
-        </div>
-      )}
-    </div>
+    </button>
   )
 }
 
@@ -360,6 +419,7 @@ export function AdminView() {
   const [dateOffset,  setDateOffset]  = useState(0)
   const [zoneFilter,  setZoneFilter]  = useState('all')
   const [searchQ,     setSearchQ]     = useState('')
+  const [selectedSpace, setSelectedSpace] = useState<Space | null>(null)
 
   const date   = addDays(TODAY, dateOffset)
   const dKey   = dateKey(date)
@@ -551,6 +611,7 @@ export function AdminView() {
                         space={s}
                         slot={day[s.id]}
                         onToggleMaintenance={() => app.toggleMaintenance(s.id, dKey)}
+                        onClick={() => setSelectedSpace(s)}
                       />
                     ))}
                   </div>
@@ -567,6 +628,16 @@ export function AdminView() {
       </section>
 
       </>}
+
+      {selectedSpace && (
+        <SpaceDetailModal
+          space={selectedSpace}
+          slot={day[selectedSpace.id]}
+          dKey={dKey}
+          onToggleMaintenance={() => app.toggleMaintenance(selectedSpace.id, dKey)}
+          onClose={() => setSelectedSpace(null)}
+        />
+      )}
     </div>
   )
 }
