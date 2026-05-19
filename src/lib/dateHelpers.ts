@@ -1,8 +1,7 @@
 export const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] as const
 export const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] as const
 
-/** Fixed "today" so the prototype is deterministic */
-export const TODAY = new Date(2026, 4, 18) // May 18 2026
+export const TODAY = new Date()
 
 export function addDays(d: Date, n: number): Date {
   const r = new Date(d)

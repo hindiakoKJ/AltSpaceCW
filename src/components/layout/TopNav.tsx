@@ -1,4 +1,5 @@
 import { useApp } from '../../context/AppContext'
+import { useAuth } from '../../context/AuthContext'
 import type { ViewType } from '../../types/app'
 import { Avatar } from '../ui/Avatar'
 import { Icon } from '../ui/Icon'
@@ -14,7 +15,9 @@ const ADMIN_TAB = { id: 'admin' as ViewType, label: 'Operator', icon: 'ShieldChe
 
 export function TopNav() {
   const app  = useApp()
+  const { user, profile, signOut } = useAuth()
   const tabs = app.userRole === 'admin' ? [...CLIENT_TABS, ADMIN_TAB] : CLIENT_TABS
+  const displayName = profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'You'
 
   // If user loses admin role while on admin view, redirect to book
   function handleRoleToggle() {
@@ -91,11 +94,22 @@ export function TopNav() {
           <button className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 hover:border-slate-300">
             <Icon name="Bell" size={16} />
           </button>
-          <button className="flex items-center gap-2 rounded-full border border-slate-200 bg-white pl-1 pr-3 py-1 hover:border-slate-300">
-            <Avatar member={CURRENT_USER} size={28} />
-            <span className="hidden text-sm font-medium text-slate-900 sm:block">Maya</span>
-            <Icon name="ChevronDown" size={14} className="text-slate-400" />
-          </button>
+          <div className="relative group">
+            <button className="flex items-center gap-2 rounded-full border border-slate-200 bg-white pl-1 pr-3 py-1 hover:border-slate-300">
+              <Avatar member={CURRENT_USER} size={28} />
+              <span className="hidden text-sm font-medium text-slate-900 sm:block">{displayName}</span>
+              <Icon name="ChevronDown" size={14} className="text-slate-400" />
+            </button>
+            <div className="absolute right-0 top-full mt-1.5 hidden w-40 rounded-2xl border border-slate-200 bg-white py-1.5 shadow-lg group-focus-within:block group-hover:block">
+              <button
+                onClick={() => signOut()}
+                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-stone-50"
+              >
+                <Icon name="LogOut" size={14} />
+                Sign out
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

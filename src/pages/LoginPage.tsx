@@ -1,8 +1,174 @@
-// Stub — replace with your UI design code
+import { useState } from 'react'
+import { useAuth } from '../context/AuthContext'
+import { Logo } from '../components/layout/Logo'
+
 export default function LoginPage() {
+  const { signIn, signUp } = useAuth()
+
+  const [mode,     setMode]     = useState<'login' | 'signup'>('login')
+  const [email,    setEmail]    = useState('')
+  const [password, setPassword] = useState('')
+  const [name,     setName]     = useState('')
+  const [confirm,  setConfirm]  = useState('')
+  const [error,    setError]    = useState('')
+  const [info,     setInfo]     = useState('')
+  const [loading,  setLoading]  = useState(false)
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    const { error } = await signIn(email, password)
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+    }
+    // on success AuthContext updates → App.tsx shows AppShell
+  }
+
+  async function handleSignup(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    setInfo('')
+    if (password !== confirm) { setError('Passwords do not match.'); return }
+    if (password.length < 6)  { setError('Password must be at least 6 characters.'); return }
+    setLoading(true)
+    const { error } = await signUp(email, password, name)
+    setLoading(false)
+    if (error) {
+      setError(error.message)
+    } else {
+      setInfo('Check your email for a confirmation link, then sign in.')
+      setMode('login')
+      setPassword('')
+      setConfirm('')
+    }
+  }
+
+  function switchMode(next: 'login' | 'signup') {
+    setMode(next)
+    setError('')
+    setInfo('')
+    setPassword('')
+    setConfirm('')
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
-      <p className="text-gray-400">Login page — paste UI code here</p>
+    <div className="flex min-h-screen items-center justify-center bg-[#F6F4EF] p-4">
+      <div className="w-full max-w-sm">
+
+        {/* Brand */}
+        <div className="mb-8 flex flex-col items-center">
+          <div className="flex items-center gap-2.5">
+            <Logo />
+            <div className="text-left leading-none">
+              <div className="font-serif text-[22px] tracking-tight text-slate-900">AltSpaceCW</div>
+              <div className="-mt-0.5 text-[10px] uppercase tracking-[0.2em] text-slate-500">Where great work happens</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
+          <h1 className="font-serif text-2xl text-slate-900">
+            {mode === 'login' ? 'Welcome back' : 'Create account'}
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            {mode === 'login' ? 'Sign in to your workspace.' : 'Get started with AltSpaceCW.'}
+          </p>
+
+          {info && (
+            <div className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{info}</div>
+          )}
+
+          <form onSubmit={mode === 'login' ? handleLogin : handleSignup} className="mt-6 space-y-4">
+
+            {mode === 'signup' && (
+              <div>
+                <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Full name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  required
+                  placeholder="Juan dela Cruz"
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 bg-stone-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                placeholder="you@example.com"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-stone-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-stone-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white"
+              />
+            </div>
+
+            {mode === 'signup' && (
+              <div>
+                <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Confirm password</label>
+                <input
+                  type="password"
+                  value={confirm}
+                  onChange={e => setConfirm(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 bg-stone-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white"
+                />
+              </div>
+            )}
+
+            {error && (
+              <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+            >
+              {loading
+                ? (mode === 'login' ? 'Signing in…'          : 'Creating account…')
+                : (mode === 'login' ? 'Sign in'              : 'Create account')}
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-slate-500">
+            {mode === 'login' ? (
+              <>No account?{' '}
+                <button onClick={() => switchMode('signup')} className="font-medium text-slate-900 hover:underline">
+                  Sign up
+                </button>
+              </>
+            ) : (
+              <>Already have one?{' '}
+                <button onClick={() => switchMode('login')} className="font-medium text-slate-900 hover:underline">
+                  Sign in
+                </button>
+              </>
+            )}
+          </p>
+        </div>
+
+        <p className="mt-6 text-center text-xs text-slate-400">© 2026 HNSCorpPH · AltSpaceCW</p>
+      </div>
     </div>
   )
 }

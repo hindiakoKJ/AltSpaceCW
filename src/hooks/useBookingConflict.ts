@@ -3,8 +3,8 @@ import { supabase } from '../lib/supabase'
 interface ConflictCheckParams {
   spaceId: string
   date: string       // YYYY-MM-DD
-  startTime: string  // HH:MM
-  endTime: string    // HH:MM
+  startHour: number  // 0-23
+  endHour: number    // 1-24
   excludeBookingId?: string
 }
 
@@ -17,15 +17,14 @@ export async function checkBookingConflict(params: ConflictCheckParams): Promise
   const { data, error } = await (supabase as any).rpc('check_booking_conflict', {
     p_space_id:           params.spaceId,
     p_date:               params.date,
-    p_start_time:         params.startTime,
-    p_end_time:           params.endTime,
+    p_start_hour:         params.startHour,
+    p_end_hour:           params.endHour,
     p_exclude_booking_id: params.excludeBookingId ?? null,
   })
 
   if (error) {
     console.error('Conflict check failed:', error.message)
-    // Fail-safe: treat as conflict to prevent accidental double-booking
-    return true
+    return true  // fail-safe: treat as conflict
   }
 
   return data as boolean
