@@ -5,7 +5,7 @@ import { useTenant } from '../../context/TenantContext'
 import type { ViewType } from '../../types/app'
 import { Avatar } from '../ui/Avatar'
 import { Icon } from '../ui/Icon'
-import { Logo } from './Logo'
+import { Wordmark } from './Wordmark'
 import { CURRENT_USER } from '../../lib/mockData'
 
 const CLIENT_TABS: { id: ViewType; label: string; icon: string }[] = [
@@ -28,15 +28,8 @@ export function TopNav() {
       <div className="mx-auto flex max-w-[1400px] items-center gap-6 px-8 py-4">
 
         {/* Brand */}
-        <button onClick={() => app.setView('book')} className="flex items-center gap-2.5">
-          <Logo />
-          <div className="text-left leading-none">
-            <div className="flex items-center gap-1.5">
-              <span className="font-serif text-[22px] tracking-tight text-slate-900">AltSpace</span>
-              <span className="rounded-md bg-amber-500 px-1.5 py-0.5 font-mono text-[11px] font-bold text-slate-900 leading-none">CW</span>
-            </div>
-            <div className="-mt-0.5 text-[10px] italic text-slate-500">a place to do the work.</div>
-          </div>
+        <button onClick={() => app.setView('book')} className="flex items-center">
+          <Wordmark height={44} />
         </button>
 
         {/* Desktop tabs */}
