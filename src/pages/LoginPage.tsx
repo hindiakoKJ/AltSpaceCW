@@ -27,7 +27,7 @@ export default function LoginPage() {
     if (error) {
       setError(error.message)
     } else {
-      navigate(workspace.trim() ? `/${workspace.trim()}` : '/', { replace: true })
+      navigate('/', { replace: true })
     }
   }
 
