@@ -36,7 +36,7 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
   const { tenant } = useTenant()
 
   const [view,       setView]       = useState<ViewType>(initialView)
-  const [userRole,   setUserRole]   = useState<UserRole>('client')
+  const [userRole,   setUserRole]   = useState<UserRole>((profile?.role as UserRole) ?? 'client')
   const [spaces,     setSpaces]     = useState<Space[]>(ALL_SPACES)
   const [occupancy,  setOccupancy]  = useState<OccupancyMap>({})
   const [myBookings, setMyBookings] = useState<Booking[]>([])
