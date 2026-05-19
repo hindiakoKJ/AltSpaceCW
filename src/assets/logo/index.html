@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AltSpaceCW · Logo Suite</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --slate:#0F172A; --slate-2:#1E293B; --slate-soft:#334155;
+    --ink:#0F172A; --muted:#64748B; --line:#E5E1D8;
+    --amber:#F59E0B; --amber-dk:#B45309;
+    --cream:#F6F4EF; --paper:#FBFAF6;
+    --emerald:#10B981;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--cream);color:var(--ink);font-family:'Plus Jakarta Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .serif{font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-style:italic}
+  .mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+  .wrap{max-width:1280px;margin:0 auto;padding:48px 40px 96px}
+  /* Top bar */
+  .top{display:flex;align-items:center;justify-content:space-between;padding-bottom:24px;border-bottom:1px solid var(--line)}
+  .brand{display:flex;gap:12px;align-items:center}
+  .brand-mark{width:44px;height:44px;border-radius:11px;background:var(--slate);display:flex;align-items:center;justify-content:center}
+  .brand-text{line-height:1}
+  .brand-text .t1{font-family:'Instrument Serif',serif;font-size:22px;letter-spacing:-0.01em}
+  .brand-text .t2{font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+  .tag{display:inline-flex;align-items:center;gap:6px;background:white;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12px;color:var(--muted)}
+  .tag .dot{width:7px;height:7px;border-radius:50%;background:var(--emerald)}
+
+  /* Hero */
+  .hero{margin-top:56px;display:grid;grid-template-columns:1.1fr 0.9fr;gap:48px;align-items:end}
+  .eyebrow{font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--muted);font-weight:500}
+  h1{font-family:'Instrument Serif',serif;font-weight:400;font-size:88px;line-height:1;margin:14px 0 0;letter-spacing:-0.02em}
+  h1 em{font-style:italic;color:var(--amber-dk)}
+  h1 span{color:var(--slate-soft)}
+  .lede{margin-top:20px;color:var(--muted);font-size:16px;line-height:1.55;max-width:46ch}
+  .hero-card{background:var(--slate);border-radius:24px;padding:36px;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:340px;position:relative;overflow:hidden}
+  .hero-card::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,0.04) 1px,transparent 1px);background-size:4px 4px}
+  .hero-card .label{position:absolute;top:18px;left:18px;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:#F59E0B;font-weight:500}
+  .hero-card .size{position:absolute;bottom:18px;right:18px;font-family:'JetBrains Mono';font-size:11px;color:rgba(255,255,255,0.45)}
+
+  /* Sections */
+  section{margin-top:96px}
+  .sec-head{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:24px}
+  .sec-head h2{font-family:'Instrument Serif',serif;font-weight:400;font-size:40px;line-height:1.05;letter-spacing:-0.02em;margin:8px 0 0}
+  .sec-head h2 em{font-style:italic;color:var(--amber-dk)}
+  .sec-head .meta{font-size:13px;color:var(--muted)}
+
+  /* Card grid */
+  .grid{display:grid;gap:16px}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;display:flex;flex-direction:column}
+  .card .stage{padding:40px;display:flex;align-items:center;justify-content:center;min-height:200px;position:relative}
+  .card .stage.dark{background:var(--slate)}
+  .card .stage.cream{background:var(--cream)}
+  .card .stage.paper{background:var(--paper)}
+  .card .meta{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-top:1px solid var(--line);background:#fff}
+  .card .name{font-size:13px;font-weight:600;color:var(--ink)}
+  .card .file{font-family:'JetBrains Mono';font-size:11px;color:var(--muted)}
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;font-size:10px;background:var(--cream);border-radius:999px;color:var(--slate-soft);text-transform:uppercase;letter-spacing:0.1em;font-weight:600}
+
+  /* Mark embeds at various scales */
+  .mark-scales{display:flex;align-items:end;gap:36px;justify-content:center}
+  .mark-scales .item{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .mark-scales img{display:block}
+  .mark-scales .px{font-family:'JetBrains Mono';font-size:10px;color:var(--muted)}
+
+  /* Clearspace */
+  .clearspace{position:relative;display:flex;align-items:center;justify-content:center}
+  .clearspace .gap{position:absolute;inset:0;background:
+    linear-gradient(to right, transparent calc(50% - 130px), rgba(245,158,11,0.18) calc(50% - 130px), rgba(245,158,11,0.18) calc(50% - 110px), transparent calc(50% - 110px), transparent calc(50% + 110px), rgba(245,158,11,0.18) calc(50% + 110px), rgba(245,158,11,0.18) calc(50% + 130px), transparent calc(50% + 130px));
+  }
+
+  /* Color palette */
+  .pal{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+  .sw{border-radius:18px;overflow:hidden;border:1px solid var(--line);background:#fff}
+  .sw .swatch{height:128px;display:flex;align-items:flex-end;padding:14px}
+  .sw .swatch.dot::after{content:"";display:block;width:12px;height:12px;border-radius:50%;background:rgba(0,0,0,0.06);margin-left:auto}
+  .sw .info{padding:12px 14px}
+  .sw .nm{font-size:13px;font-weight:600}
+  .sw .hex{font-family:'JetBrains Mono';font-size:11px;color:var(--muted);margin-top:2px}
+
+  /* Type specimens */
+  .type-spec{background:#fff;border:1px solid var(--line);border-radius:24px;padding:28px;display:grid;grid-template-columns:120px 1fr;gap:20px;align-items:center}
+  .type-spec .lbl{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted)}
+  .type-spec .lbl .nm{display:block;font-family:'Instrument Serif',serif;font-style:italic;font-size:22px;letter-spacing:0;color:var(--ink);text-transform:none;margin-top:4px}
+  .type-spec .alpha{font-size:48px;line-height:1.05;letter-spacing:-0.02em;color:var(--slate-2)}
+  .type-spec .alpha.s{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;font-size:64px}
+  .type-spec .alpha.m{font-family:'JetBrains Mono';font-weight:500;font-size:36px}
+
+  /* In-context mocks */
+  .mocks{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .mock{background:#fff;border:1px solid var(--line);border-radius:24px;overflow:hidden}
+  .mock .bar{height:14px;background:var(--cream);display:flex;align-items:center;gap:6px;padding:0 12px}
+  .mock .bar i{width:8px;height:8px;border-radius:50%;background:#D6D3D1}
+  .mock .bar i:nth-child(2){background:#E5E1D8}
+  .mock .bar i:nth-child(3){background:#E5E1D8}
+  .mock .url{margin-left:8px;font-family:'JetBrains Mono';font-size:10px;color:var(--muted)}
+  .mock .body{padding:28px 28px 36px;min-height:320px}
+  .mock-web .nav{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:16px}
+  .mock-web .links{display:flex;gap:18px;font-size:13px;color:var(--slate-soft)}
+  .mock-web h3{font-family:'Instrument Serif',serif;font-size:42px;line-height:1.05;letter-spacing:-0.02em;margin:32px 0 8px;font-weight:400}
+  .mock-web h3 em{font-style:italic;color:var(--amber-dk)}
+  .mock-web p{color:var(--muted);font-size:14px;max-width:36ch}
+  .mock-web .cta{margin-top:16px;display:inline-flex;align-items:center;gap:8px;background:var(--slate);color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;font-weight:600}
+
+  .mock-mob{background:var(--slate);padding:18px;display:flex;justify-content:center}
+  .mock-mob .phone{width:240px;background:#fff;border-radius:28px;overflow:hidden;border:6px solid #111}
+  .mock-mob .top{display:flex;justify-content:space-between;align-items:center;padding:10px 14px 0;border:none}
+  .mock-mob .top .t{font-family:'JetBrains Mono';font-size:10px}
+  .mock-mob .content{padding:18px 18px 24px}
+  .mock-mob h4{font-family:'Instrument Serif',serif;font-size:24px;line-height:1.1;letter-spacing:-0.01em;margin:14px 0 0;font-weight:400}
+  .mock-mob h4 em{font-style:italic;color:var(--amber-dk)}
+  .mock-mob .row{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}
+  .mock-mob .chip{font-size:10px;padding:5px 9px;border-radius:999px;background:var(--cream);color:var(--slate-soft);border:1px solid var(--line)}
+  .mock-mob .chip.on{background:var(--slate);color:#fff;border-color:var(--slate)}
+  .mock-mob .seat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:14px}
+  .mock-mob .seat{aspect-ratio:1;border-radius:6px;background:var(--cream);font-family:'Instrument Serif';font-style:italic;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--slate-soft);border:1px solid var(--line)}
+  .mock-mob .seat.on{background:var(--amber);color:#fff;border-color:var(--amber)}
+  .mock-mob .seat.off{color:#CBD5E1}
+
+  /* Footer */
+  footer{margin-top:96px;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;color:var(--muted);font-size:12px}
+  footer .mono{font-family:'JetBrains Mono'}
+
+  /* Misc */
+  a{color:inherit}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- TOP -->
+  <header class="top">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+          <path d="M7 25 L16 7 L25 25 M11 18 H21" stroke="#F59E0B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="25" cy="7" r="2.2" fill="#F59E0B"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="t1">AltSpaceCW · Brand</div>
+        <div class="t2">Logo suite v1 · May 2026</div>
+      </div>
+    </div>
+    <div class="tag"><span class="dot"></span> Final candidates — pick &amp; ship</div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero" style="margin-top:48px">
+    <div>
+      <div class="eyebrow">A new mark for</div>
+      <h1>Alt<em>Space</em><span>CW.</span></h1>
+      <p class="lede">A wordmark + monogram set for the co-working web app, the marketing site, and the parent <a href="#" class="mono" style="color:var(--ink)">hnscorpph.com</a>. Built on the studio's existing slate / amber / cream palette and the Instrument Serif × Plus Jakarta Sans pairing — so it slots in without any new design debt.</p>
+    </div>
+    <div class="hero-card">
+      <div class="label">Primary mark</div>
+      <img src="marks/mark-a-on-slate.svg" width="220" height="220" alt="Primary mark">
+      <div class="size">mark-a · 220px</div>
+    </div>
+  </section>
+
+  <!-- PRIMARY LOCKUP -->
+  <section>
+    <div class="sec-head">
+      <div>
+        <div class="eyebrow">01 · Primary lockup</div>
+        <h2>The <em>everyday</em> lockup.</h2>
+      </div>
+      <div class="meta">Use this on the web app header, the landing hero, and email signatures.</div>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <div class="stage paper" style="min-height:200px">
+          <img src="lockups/horizontal-on-white.svg" width="360" height="80" alt="Horizontal on white">
+        </div>
+        <div class="meta">
+          <div><span class="pill">on white</span> <span class="name" style="margin-left:8px">Horizontal — light</span></div>
+          <div class="file">lockups/horizontal-on-white.svg</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="stage dark" style="min-height:200px">
+          <img src="lockups/horizontal-on-slate.svg" width="360" height="80" alt="Horizontal on slate">
+        </div>
+        <div class="meta">
+          <div><span class="pill">on slate</span> <span class="name" style="margin-left:8px">Horizontal — dark</span></div>
+          <div class="file">lockups/horizontal-on-slate.svg</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card">
+        <div class="stage cream" style="min-height:320px">
+          <img src="lockups/stacked-on-cream.svg" width="240" height="240" alt="Stacked on cream">
+        </div>
+        <div class="meta">
+          <div><span class="pill">on cream</span> <span class="name" style="margin-left:8px">Stacked — light</span></div>
+          <div class="file">lockups/stacked-on-cream.svg</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="stage dark" style="min-height:320px">
+          <img src="lockups/stacked-on-slate.svg" width="240" height="240" alt="Stacked on slate">
+        </div>
+        <div class="meta">
+          <div><span class="pill">on slate</span> <span class="name" style="margin-left:8px">Stacked — dark</span></div>
+          <div class="file">lockups/stacked-on-slate.svg</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARK + SCALE -->
+  <section>
+    <div class="sec-head">
+      <div>
+        <div class="eyebrow">02 · The mark</div>
+        <h2>An <em>A</em> with somewhere to land.</h2>
+      </div>
+      <div class="meta">Pitched roofline · crossbar desk · amber period.<br/>Reads as a roof, an apex, a punctuation mark at the end of a productive day.</div>
+    </div>
+
+    <div class="card">
+      <div class="stage paper" style="min-height:240px">
+        <div class="mark-scales">
+          <div class="item"><img src="marks/mark-a.svg" width="16"  height="16"  alt=""><span class="px">16</span></div>
+          <div class="item"><img src="marks/mark-a.svg" width="24"  height="24"  alt=""><span class="px">24</span></div>
+          <div class="item"><img src="marks/mark-a.svg" width="40"  height="40"  alt=""><span class="px">40</span></div>
+          <div class="item"><img src="marks/mark-a.svg" width="64"  height="64"  alt=""><span class="px">64</span></div>
+          <div class="item"><img src="marks/mark-a.svg" width="96"  height="96"  alt=""><span class="px">96</span></div>
+          <div class="item"><img src="marks/mark-a.svg" width="160" height="160" alt=""><span class="px">160</span></div>
+        </div>
+      </div>
+      <div class="meta">
+        <div><span class="pill">scales</span> <span class="name" style="margin-left:8px">Hairline weight stays legible from favicon to billboard</span></div>
+        <div class="file">marks/mark-a.svg</div>
+      </div>
+    </div>
+
+    <div class="grid g4" style="margin-top:16px">
+      <div class="card">
+        <div class="stage cream"><img src="marks/mark-a-on-cream.svg" width="96" height="96"></div>
+        <div class="meta"><div class="name">Primary · on cream</div><div class="file">mark-a-on-cream.svg</div></div>
+      </div>
+      <div class="card">
+        <div class="stage dark"><img src="marks/mark-a-on-slate.svg" width="96" height="96"></div>
+        <div class="meta"><div class="name">Primary · on slate</div><div class="file">mark-a-on-slate.svg</div></div>
+      </div>
+      <div class="card">
+        <div class="stage paper"><img src="marks/mark-aperture.svg" width="96" height="96"></div>
+        <div class="meta"><div class="name">Alt · aperture</div><div class="file">mark-aperture.svg</div></div>
+      </div>
+      <div class="card">
+        <div class="stage paper"><img src="marks/mark-modular.svg" width="96" height="96"></div>
+        <div class="meta"><div class="name">Alt · modular grid</div><div class="file">mark-modular.svg</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COLOR -->
+  <section>
+    <div class="sec-head">
+      <div>
+        <div class="eyebrow">03 · Color</div>
+        <h2>Three notes &mdash; <em>slate</em>, <em>amber</em>, <em>cream</em>.</h2>
+      </div>
+      <div class="meta">All accessible on each other. Amber sparingly — apex dot, accent fills, CTAs.</div>
+    </div>
+    <div class="pal">
+      <div class="sw"><div class="swatch dot" style="background:#0F172A"></div><div class="info"><div class="nm" style="color:#0F172A">Slate 900</div><div class="hex">#0F172A</div></div></div>
+      <div class="sw"><div class="swatch dot" style="background:#1E293B"></div><div class="info"><div class="nm">Slate 800</div><div class="hex">#1E293B</div></div></div>
+      <div class="sw"><div class="swatch dot" style="background:#F59E0B"></div><div class="info"><div class="nm">Amber 500</div><div class="hex">#F59E0B</div></div></div>
+      <div class="sw"><div class="swatch dot" style="background:#F6F4EF"></div><div class="info"><div class="nm">Cream 50</div><div class="hex">#F6F4EF</div></div></div>
+      <div class="sw"><div class="swatch dot" style="background:#10B981"></div><div class="info"><div class="nm">Emerald (signal)</div><div class="hex">#10B981</div></div></div>
+    </div>
+  </section>
+
+  <!-- TYPE -->
+  <section>
+    <div class="sec-head">
+      <div>
+        <div class="eyebrow">04 · Type pairing</div>
+        <h2>A <em>display</em> serif &amp; a working sans.</h2>
+      </div>
+      <div class="meta">Both already in the web app — no new font licenses needed.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="type-spec">
+        <div class="lbl">Display<span class="nm">Instrument Serif</span></div>
+        <div class="alpha s">AltSpaceCW &mdash; <em>a place to do the work.</em></div>
+      </div>
+      <div class="type-spec">
+        <div class="lbl">Text<span class="nm" style="font-family:'Plus Jakarta Sans';font-style:normal;font-weight:600">Plus Jakarta Sans</span></div>
+        <div class="alpha" style="font-family:'Plus Jakarta Sans';font-weight:600">AltSpaceCW — co-working, by the hour or the day.</div>
+      </div>
+      <div class="type-spec">
+        <div class="lbl">Mono<span class="nm" style="font-family:'JetBrains Mono';font-style:normal;font-weight:500;font-size:18px">JetBrains Mono</span></div>
+        <div class="alpha m">DESK 07 · 09:00–17:00 · $25</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- IN CONTEXT -->
+  <section>
+    <div class="sec-head">
+      <div>
+        <div class="eyebrow">05 · In context</div>
+        <h2>Where it <em>lives</em>.</h2>
+      </div>
+      <div class="meta">Landing page hero · mobile web app · favicon · parent site nav.</div>
+    </div>
+
+    <div class="mocks">
+      <!-- Landing -->
+      <div class="mock">
+        <div class="bar"><i></i><i></i><i></i><span class="url">altspacecw.com</span></div>
+        <div class="body mock-web">
+          <div class="nav">
+            <img src="lockups/horizontal-on-white.svg" height="40" alt="">
+            <div class="links"><span>Spaces</span><span>Membership</span><span>Studios</span><span>Book</span></div>
+          </div>
+          <h3>Sit down. <em>Get to work.</em></h3>
+          <p>A members' studio for designers, founders and quiet thinkers — by the hour, the day, or the year.</p>
+          <div class="cta">Book a desk <span style="color:#F59E0B">→</span></div>
+        </div>
+      </div>
+
+      <!-- Phone -->
+      <div class="mock-mob mock">
+        <div class="phone">
+          <div class="top">
+            <span class="t">9:41</span>
+            <span class="t">●</span>
+          </div>
+          <div class="content">
+            <img src="marks/mark-a.svg" width="32" height="32" alt="">
+            <h4>Good morning, <em>Maya.</em></h4>
+            <div class="row">
+              <span class="chip on">Hot Desk</span>
+              <span class="chip">Dedicated</span>
+              <span class="chip">Room</span>
+            </div>
+            <div class="seat-grid">
+              <div class="seat">01</div><div class="seat">02</div><div class="seat on">03</div><div class="seat off">04</div>
+              <div class="seat">05</div><div class="seat off">06</div><div class="seat">07</div><div class="seat">08</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Favicon strip -->
+      <div class="mock" style="grid-column:span 2">
+        <div class="bar">
+          <i></i><i></i><i></i>
+          <div style="display:flex;gap:6px;margin-left:14px;align-items:center">
+            <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-top:none;padding:6px 10px 6px 8px;border-radius:0 0 8px 8px;font-size:11px">
+              <img src="favicon.svg" width="14" height="14" style="vertical-align:middle"> AltSpaceCW · Book a desk
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;color:var(--muted);font-size:11px;padding:6px 10px">
+              <span style="width:14px;height:14px;background:var(--line);border-radius:3px;display:inline-block"></span>
+              hnscorpph.com
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;color:var(--muted);font-size:11px;padding:6px 10px">
+              <span style="width:14px;height:14px;background:var(--line);border-radius:3px;display:inline-block"></span>
+              Admin
+            </div>
+          </div>
+        </div>
+        <div class="body" style="min-height:120px;display:flex;align-items:center;gap:32px;justify-content:center">
+          <div style="text-align:center"><img src="favicon.svg" width="16" height="16"><div class="file" style="margin-top:6px">16 · tab</div></div>
+          <div style="text-align:center"><img src="favicon.svg" width="32" height="32"><div class="file" style="margin-top:6px">32 · bookmark</div></div>
+          <div style="text-align:center"><img src="app-icon-512.svg" width="64" height="64" style="border-radius:14px"><div class="file" style="margin-top:6px">64 · iOS</div></div>
+          <div style="text-align:center"><img src="app-icon-512.svg" width="120" height="120" style="border-radius:26px"><div class="file" style="margin-top:6px">120 · PWA</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HNSCORP -->
+  <section>
+    <div class="sec-head">
+      <div>
+        <div class="eyebrow">06 · For hnscorpph.com</div>
+        <h2>A <em>quiet</em> co-brand.</h2>
+      </div>
+      <div class="meta">On the parent site, AltSpaceCW shows up as one of HNS Corp's properties. A simple endorsement lockup.</div>
+    </div>
+    <div class="card">
+      <div class="stage paper" style="min-height:240px;flex-direction:column;gap:18px">
+        <div style="display:flex;align-items:center;gap:24px">
+          <span class="mono" style="font-size:12px;letter-spacing:0.22em;text-transform:uppercase;color:var(--muted)">An HNS Corp studio</span>
+          <span style="height:36px;width:1px;background:var(--line)"></span>
+          <img src="lockups/horizontal-on-white.svg" height="56" alt="">
+        </div>
+        <div style="display:flex;align-items:center;gap:24px">
+          <img src="marks/mark-a.svg" width="48" height="48">
+          <div>
+            <div class="mono" style="font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--muted)">Property 04 · Brooklyn</div>
+            <div style="font-family:'Instrument Serif';font-size:32px;line-height:1;margin-top:6px">AltSpace<span style="font-style:italic;color:var(--amber-dk)">CW</span></div>
+            <div style="font-size:13px;color:var(--muted);margin-top:6px">Members' co-working &mdash; book by the hour, the day, or the year.</div>
+          </div>
+          <a href="#" style="margin-left:auto;font-size:13px;font-weight:600;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;gap:6px">Visit altspacecw.com <span style="color:var(--amber-dk)">→</span></a>
+        </div>
+      </div>
+      <div class="meta">
+        <div><span class="pill">endorsement</span> <span class="name" style="margin-left:8px">Drop this card into hnscorpph.com / our properties</span></div>
+        <div class="file">SVGs above + 12px / 22 tracking caps label</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- USAGE -->
+  <section>
+    <div class="sec-head">
+      <div>
+        <div class="eyebrow">07 · Do &amp; don't</div>
+        <h2>A short list of <em>house rules</em>.</h2>
+      </div>
+    </div>
+    <div class="grid g3">
+      <div class="card">
+        <div class="stage paper" style="background:#fff"><img src="marks/mark-a.svg" width="80" height="80"></div>
+        <div class="meta"><div class="name" style="color:#10B981">✓ Do — original proportions</div><div class="file">no scaling axes independently</div></div>
+      </div>
+      <div class="card">
+        <div class="stage paper" style="background:#fff"><img src="marks/mark-a.svg" width="120" height="60" style="transform:scaleY(0.6)"></div>
+        <div class="meta"><div class="name" style="color:#DC2626">✗ Don't — stretch or squish</div><div class="file">use only as exported</div></div>
+      </div>
+      <div class="card">
+        <div class="stage" style="background:linear-gradient(135deg,#FB7185,#7C3AED)"><img src="marks/mark-a-on-slate.svg" width="96" height="96"></div>
+        <div class="meta"><div class="name" style="color:#DC2626">✗ Don't — busy backgrounds</div><div class="file">use a flat field or 30% scrim</div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>AltSpaceCW · Logo suite v1</span>
+    <span class="mono">Slate #0F172A &nbsp;·&nbsp; Amber #F59E0B &nbsp;·&nbsp; Cream #F6F4EF</span>
+  </footer>
+</div>
+
+</body>
+</html>

@@ -1,14 +1,12 @@
-export function Logo() {
+export function Logo({ size = 40 }: { size?: number }) {
   return (
-    <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
-        <path
-          d="M5 19 L12 5 L19 19 M8 14 H16"
-          stroke="#F59E0B" strokeWidth="2"
-          strokeLinecap="round" strokeLinejoin="round"
-        />
-        <circle cx="20" cy="6" r="1.5" fill="#F59E0B" />
-      </svg>
-    </div>
+    <svg viewBox="0 0 32 32" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+      <rect width="32" height="32" rx="7" fill="#0F172A" />
+      <g fill="none" stroke="#F59E0B" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M7 25 L16 7 L25 25" />
+        <path d="M11 18 H21" />
+      </g>
+      <circle cx="25" cy="7" r="2.2" fill="#F59E0B" />
+    </svg>
   )
 }

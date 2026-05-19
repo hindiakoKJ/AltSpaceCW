@@ -11,9 +11,12 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
             <Logo />
-            <div className="leading-none">
-              <div className="font-serif text-xl text-slate-900">AltSpaceCW</div>
-              <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">by HNSCorpPH</div>
+            <div className="text-left leading-none">
+              <div className="flex items-center gap-1.5">
+                <span className="font-serif text-xl text-slate-900">AltSpace</span>
+                <span className="rounded-md bg-amber-500 px-1.5 py-0.5 font-mono text-[11px] font-bold text-slate-900 leading-none">CW</span>
+              </div>
+              <div className="text-[10px] italic text-slate-500">a place to do the work.</div>
             </div>
           </div>
 
@@ -335,9 +338,14 @@ export default function LandingPage() {
             <div>
               <div className="flex items-center gap-3">
                 <Logo />
-                <span className="font-serif text-xl text-slate-900">AltSpaceCW</span>
+                <div className="text-left leading-none">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-serif text-xl text-slate-900">AltSpace</span>
+                    <span className="rounded-md bg-amber-500 px-1.5 py-0.5 font-mono text-[11px] font-bold text-slate-900 leading-none">CW</span>
+                  </div>
+                  <div className="text-[10px] italic text-slate-500">a place to do the work.</div>
+                </div>
               </div>
-              <p className="mt-1 text-sm text-slate-400">Co-working management, simplified.</p>
             </div>
             <nav className="flex flex-wrap items-center gap-6 text-sm text-slate-500">
               <Link to="/privacy" className="transition-colors hover:text-slate-900">Privacy Policy</Link>

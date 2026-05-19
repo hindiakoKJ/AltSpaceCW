@@ -31,10 +31,11 @@ export function TopNav() {
         <button onClick={() => app.setView('book')} className="flex items-center gap-2.5">
           <Logo />
           <div className="text-left leading-none">
-            <div className="font-serif text-[22px] tracking-tight text-slate-900">
-              {tenant?.name ?? 'AltSpaceCW'}
+            <div className="flex items-center gap-1.5">
+              <span className="font-serif text-[22px] tracking-tight text-slate-900">AltSpace</span>
+              <span className="rounded-md bg-amber-500 px-1.5 py-0.5 font-mono text-[11px] font-bold text-slate-900 leading-none">CW</span>
             </div>
-            <div className="-mt-0.5 text-[10px] uppercase tracking-[0.2em] text-slate-500">Where great work happens</div>
+            <div className="-mt-0.5 text-[10px] italic text-slate-500">a place to do the work.</div>
           </div>
         </button>
 

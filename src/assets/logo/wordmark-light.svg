@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 56" width="260" height="56">
+
+<defs>
+  
+</defs>
+  
+  <text x="0" y="40" class="pjs-b" font-size="36" fill="#F6F4EF">AltSpace</text>
+  <g transform="translate(173 16)">
+    <rect width="44" height="22" rx="7" fill="#F59E0B"></rect>
+    <text x="22" y="16" class="mono" font-size="12" fill="#F6F4EF" text-anchor="middle">CW</text>
+  </g>
+</svg>

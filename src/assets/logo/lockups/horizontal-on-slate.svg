@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80" width="360" height="80">
+
+<defs>
+  
+</defs>
+  <rect width="360" height="80" fill="#0F172A"></rect>
+  
+  <g transform="translate(8 12)">
+    <rect width="56" height="56" rx="14" fill="#F6F4EF"></rect>
+    <g fill="none" stroke="#F59E0B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" transform="translate(4 4) scale(1)">
+      <path d="M10.5 45.5 L28 10.5 L45.5 45.5"></path>
+      <path d="M18 32.5 H38"></path>
+    </g>
+    <circle cx="48" cy="12" r="3.5" fill="#F59E0B"></circle>
+  </g>
+  
+  <g transform="translate(80 0)">
+    <text x="0" y="48" class="pjs-b" font-size="32" fill="#F6F4EF">AltSpace</text>
+    
+    <g transform="translate(177 22)">
+      <rect x="0" y="0" width="38" height="20" rx="6" fill="#F59E0B"></rect>
+      <text x="19" y="14.5" class="mono" font-size="11" fill="#F6F4EF" text-anchor="middle">CW</text>
+    </g>
+    
+    <text x="0" y="64" class="serif" font-size="15" fill="#94A3B8">a place to do the work.</text>
+  </g>
+</svg>
