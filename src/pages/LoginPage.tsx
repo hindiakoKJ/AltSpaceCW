@@ -81,9 +81,13 @@ export default function LoginPage() {
             <div className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{info}</div>
           )}
 
+          {/* Hidden honeypot inputs — trick browser autofill away from workspace field */}
+          <input type="text"  style={{ display: 'none' }} autoComplete="username" readOnly />
+          <input type="email" style={{ display: 'none' }} autoComplete="email"    readOnly />
+
           <form onSubmit={mode === 'login' ? handleLogin : handleSignup} className="mt-6 space-y-4">
 
-            {/* Workspace ID — always first */}
+            {/* Workspace ID — always shown */}
             <div>
               <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Workspace ID</label>
               <input
