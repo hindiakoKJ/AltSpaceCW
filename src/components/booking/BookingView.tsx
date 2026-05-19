@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { Space } from '../../types/app'
 import { useApp } from '../../context/AppContext'
-import { ALL_SPACES } from '../../lib/mockData'
 import { TODAY, DAYS, MONTHS, addDays, dateKey, sameDay, fmtRange } from '../../lib/dateHelpers'
 import { useDragScroll } from '../../hooks/useDragScroll'
 import { Pill } from '../ui/Pill'
@@ -53,7 +52,7 @@ export function BookingView() {
 
   /* ── Capacity counts ─────────────────────────────────────────── */
   function countAvail(type: string) {
-    const list = ALL_SPACES.filter(s => s.type === type)
+    const list = app.spaces.filter(s => s.type === type)
     const avail = list.filter(s => !app.isOccupied(s.id, dKey, 9, 17)).length
     return { avail, total: list.length }
   }
@@ -63,9 +62,9 @@ export function BookingView() {
 
   /* ── Filtered pool ───────────────────────────────────────────── */
   const pool = useMemo(() => {
-    if (filter === 'all') return ALL_SPACES
-    return ALL_SPACES.filter(s => s.type === filter)
-  }, [filter])
+    if (filter === 'all') return app.spaces
+    return app.spaces.filter(s => s.type === filter)
+  }, [filter, app.spaces])
 
   /* ── Time slot helpers ───────────────────────────────────────── */
   function toggleSlot(h: number) {
@@ -219,7 +218,7 @@ export function BookingView() {
             title={<>Pick a <span className="serif-italic">vibe</span>.</>}
           >
             <div className="flex flex-wrap items-center gap-2">
-              <Pill active={filter === 'all'}       onClick={() => setFilter('all')}       count={ALL_SPACES.length} icon="LayoutGrid">All</Pill>
+              <Pill active={filter === 'all'}       onClick={() => setFilter('all')}       count={app.spaces.length} icon="LayoutGrid">All</Pill>
               <Pill active={filter === 'hot'}       onClick={() => setFilter('hot')}       count={hot.avail}         icon="Coffee">Hot Desks</Pill>
               <Pill active={filter === 'dedicated'} onClick={() => setFilter('dedicated')} count={ded.avail}         icon="Monitor">Dedicated</Pill>
               <Pill active={filter === 'room'}      onClick={() => setFilter('room')}      count={room.avail}        icon="Users">Conference Rooms</Pill>

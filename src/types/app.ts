@@ -1,13 +1,22 @@
-export type ViewType  = 'book' | 'dashboard' | 'admin'
-export type UserRole  = 'client' | 'admin'
-export type SpaceType = 'hot' | 'dedicated' | 'room'
+export type ViewType     = 'book' | 'dashboard' | 'admin'
+export type UserRole     = 'client' | 'admin' | 'console'
+export type SpaceType    = 'hot' | 'dedicated' | 'room'
 export type BookingStatus = 'upcoming' | 'past'
-export type ToastKind = 'success' | 'info' | 'error'
+export type ToastKind    = 'success' | 'info' | 'error'
+
+export interface Tenant {
+  id:         string
+  name:       string
+  slug:       string
+  status:     'active' | 'suspended'
+  admin_email?: string | null
+  created_at: string
+}
 
 export interface Member {
   name: string
   avatar: string
-  color: string   // Tailwind bg+text classes e.g. "bg-amber-100 text-amber-900"
+  color: string
   plan: string
   isMe?: boolean
 }
@@ -17,8 +26,8 @@ export interface Space {
   label: string
   type: SpaceType
   zone: string
-  price: number   // day rate
-  hourly: number  // hourly rate
+  price: number
+  hourly: number
   capacity?: number
 }
 
@@ -30,15 +39,14 @@ export interface OccupancySlot {
   mine?: true
 }
 
-/** dateKey → { spaceId → slot } */
 export type OccupancyMap = Record<string, Record<string, OccupancySlot>>
 
 export interface Booking {
   id: string
   space: Space
-  date: string       // YYYY-MM-DD
-  start: number      // hour 0-23
-  end: number        // hour 0-23
+  date: string
+  start: number
+  end: number
   price: number
   status: BookingStatus
 }
@@ -56,12 +64,12 @@ export interface TypeMeta {
   icon: string
 }
 
-/* ── Studio setup types ────────────────────────────────────────────── */
+/* ── Studio setup types ──────────────────────────────────────── */
 
 export interface DayHours {
   open: boolean
-  from: string  // e.g. "08:00"
-  to: string    // e.g. "22:00"
+  from: string
+  to: string
 }
 
 export interface StudioProfile {
@@ -73,18 +81,18 @@ export interface StudioProfile {
   phone: string
   email: string
   website: string
-  hours: Record<string, DayHours>  // key: 'mon' | 'tue' | ... | 'sun'
+  hours: Record<string, DayHours>
 }
 
 export interface MembershipPlan {
   id: string
   name: string
-  price: number           // monthly (or per-use for day pass)
+  price: number
   perUnit: 'month' | 'day' | 'visit'
-  dayCredits: number | null   // null = unlimited
+  dayCredits: number | null
   dedicated: boolean
-  roomHours: number       // meeting room hours included
-  color: string           // tailwind color name: 'stone' | 'amber' | 'emerald' | 'slate' | 'violet'
+  roomHours: number
+  color: string
   popular?: boolean
   description: string
 }
@@ -102,6 +110,7 @@ export interface AppContextValue {
   setView: (v: ViewType) => void
   userRole: UserRole
   setUserRole: (r: UserRole) => void
+  spaces: Space[]
   occupancy: OccupancyMap
   isOccupied: (spaceId: string, dKey: string, start: number, end: number) => boolean
   toggleMaintenance: (spaceId: string, dKey: string) => void

@@ -1,23 +1,36 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
-import type { Profile } from '../types/database'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sb = supabase as any
+
+export interface Profile {
+  id:         string
+  full_name:  string
+  email:      string | null
+  role:       'client' | 'admin' | 'console'
+  plan:       string
+  tenant_id:  string | null
+  created_at: string
+  tenant?: { id: string; name: string; slug: string; status: string } | null
+}
 
 interface AuthContextValue {
-  session: Session | null
-  user: User | null
-  profile: Profile | null
-  loading: boolean
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>
-  signOut: () => Promise<void>
+  session:  Session | null
+  user:     User | null
+  profile:  Profile | null
+  loading:  boolean
+  signIn:   (email: string, password: string) => Promise<{ error: Error | null }>
+  signUp:   (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>
+  signOut:  () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
-  const [user, setUser] = useState<User | null>(null)
+  const [user,    setUser]    = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -42,12 +55,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   async function fetchProfile(userId: string) {
-    const { data } = await supabase
+    const { data } = await sb
       .from('profiles')
-      .select('*')
+      .select('*, tenant:tenants(id, name, slug, status)')
       .eq('id', userId)
       .single()
-    setProfile(data)
+    setProfile(data as Profile | null)
     setLoading(false)
   }
 
@@ -78,6 +91,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used inside AuthProvider')
+  if (!ctx) throw new Error('useAuth must be inside AuthProvider')
   return ctx
 }
