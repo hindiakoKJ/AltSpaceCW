@@ -13,7 +13,8 @@ interface ConflictCheckParams {
  * Returns true if a conflict exists (booking should be BLOCKED).
  */
 export async function checkBookingConflict(params: ConflictCheckParams): Promise<boolean> {
-  const { data, error } = await supabase.rpc('check_booking_conflict', {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc('check_booking_conflict', {
     p_space_id:           params.spaceId,
     p_date:               params.date,
     p_start_time:         params.startTime,
