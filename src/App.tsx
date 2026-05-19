@@ -6,6 +6,9 @@ import { AppProvider } from './context/AppContext'
 import { AppShell } from './components/layout/AppShell'
 import LoginPage from './pages/LoginPage'
 import ConsolePage from './pages/ConsolePage'
+import LandingPage from './pages/LandingPage'
+import PrivacyPage from './pages/PrivacyPage'
+import ContactPage from './pages/ContactPage'
 import type { ViewType } from './types/app'
 
 function LoadingScreen() {
@@ -83,6 +86,9 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/"             element={<LandingPage />} />
+          <Route path="/privacy"      element={<PrivacyPage />} />
+          <Route path="/contact"      element={<ContactPage />} />
           <Route path="/login"        element={<LoginPage />} />
           <Route path="/console"      element={<RequireAuth><RequireConsole><ConsolePage /></RequireConsole></RequireAuth>} />
           <Route path="/:slug/admin"  element={<TenantApp initialView="admin" />} />
