@@ -1,12 +1,18 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Space } from '../../types/app'
 import { useApp } from '../../context/AppContext'
+import { useTenant } from '../../context/TenantContext'
 import { ALL_SPACES, MEMBERS, TYPE_META } from '../../lib/mockData'
-import { TODAY, addDays, dateKey, fmtLongDate, fmtHourShort } from '../../lib/dateHelpers'
+import { TODAY, addDays, dateKey, fmtLongDate, fmtHourShort, parseKey } from '../../lib/dateHelpers'
 import { Icon } from '../ui/Icon'
 import { Avatar } from '../ui/Avatar'
 import { Pill } from '../ui/Pill'
 import { SetupPanel } from './SetupPanel'
+import { CountdownTimer } from '../ui/CountdownTimer'
+import { supabase } from '../../lib/supabase'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sb = supabase as any
 
 type AdminTab = 'operations' | 'setup'
 
@@ -410,14 +416,39 @@ function MaintenanceQueue({
 
 /* ── Main admin view ──────────────────────────────────────────────── */
 
+interface PendingPayment {
+  id: string
+  space: { label: string; type: string; zone: string } | null
+  date: string
+  start_hour: number
+  end_hour: number
+  price: number
+  admin_deadline: string | null
+  user: { full_name: string; email: string } | null
+}
+
 export function AdminView() {
   const app = useApp()
+  const { tenant } = useTenant()
 
   const [adminTab,    setAdminTab]    = useState<AdminTab>('operations')
   const [dateOffset,  setDateOffset]  = useState(0)
   const [zoneFilter,  setZoneFilter]  = useState('all')
   const [searchQ,     setSearchQ]     = useState('')
   const [selectedSpace, setSelectedSpace] = useState<Space | null>(null)
+  const [pendingPayments, setPendingPayments] = useState<PendingPayment[]>([])
+
+  useEffect(() => {
+    if (!tenant) return
+    sb.from('bookings')
+      .select('id, date, start_hour, end_hour, price, admin_deadline, space:spaces(label, type, zone), user:profiles(full_name, email)')
+      .eq('tenant_id', tenant.id)
+      .eq('payment_status', 'awaiting_confirmation')
+      .order('admin_deadline', { ascending: true })
+      .then(({ data }: { data: PendingPayment[] | null }) => {
+        if (data) setPendingPayments(data)
+      })
+  }, [tenant?.id])
 
   const date   = addDays(TODAY, dateOffset)
   const dKey   = dateKey(date)
@@ -555,6 +586,59 @@ export function AdminView() {
         <BreakdownCard type="dedicated" day={day} />
         <BreakdownCard type="room"      day={day} />
       </section>
+
+      {/* Pending payments */}
+      {pendingPayments.length > 0 && (
+        <section className="mt-8">
+          <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Pending payments</div>
+          <h2 className="mt-1 text-[28px] leading-tight tracking-tight text-slate-900">
+            {pendingPayments.length} <span className="serif-italic">awaiting confirmation</span>.
+          </h2>
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+            {pendingPayments.map(p => (
+              <div key={p.id} className="rounded-3xl border border-amber-200 bg-amber-50/50 p-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="font-serif text-xl text-slate-900">{p.space?.label}</div>
+                    <div className="text-xs text-slate-500">{p.space?.zone} · {fmtLongDate(parseKey(p.date))}</div>
+                    <div className="mt-1 font-mono text-xs text-slate-500">{fmtHourShort(p.start_hour)} – {fmtHourShort(p.end_hour)}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-mono text-sm font-medium text-slate-900">₱{p.price.toLocaleString()}</div>
+                    <div className="text-xs text-slate-500">{p.user?.full_name || p.user?.email || 'Unknown'}</div>
+                  </div>
+                </div>
+                {p.admin_deadline && (
+                  <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+                    <Icon name="Clock" size={12} />
+                    Confirm within <CountdownTimer deadline={p.admin_deadline} />
+                  </div>
+                )}
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={async () => {
+                      await sb.from('bookings').update({ payment_status: 'confirmed' }).eq('id', p.id)
+                      setPendingPayments(ps => ps.filter(x => x.id !== p.id))
+                    }}
+                    className="flex-1 rounded-xl bg-slate-900 py-2 text-sm font-medium text-white hover:bg-slate-700"
+                  >
+                    Confirm payment
+                  </button>
+                  <button
+                    onClick={async () => {
+                      await sb.from('bookings').update({ payment_status: 'expired' }).eq('id', p.id)
+                      setPendingPayments(ps => ps.filter(x => x.id !== p.id))
+                    }}
+                    className="rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-stone-50"
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Floor inventory */}
       <section className="mt-12">

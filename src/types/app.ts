@@ -3,6 +3,7 @@ export type UserRole     = 'client' | 'admin' | 'console'
 export type SpaceType    = 'hot' | 'dedicated' | 'room'
 export type BookingStatus = 'upcoming' | 'past'
 export type ToastKind    = 'success' | 'info' | 'error'
+export type PaymentStatus = 'pending' | 'awaiting_confirmation' | 'confirmed' | 'expired'
 
 export interface Tenant {
   id:         string
@@ -49,6 +50,9 @@ export interface Booking {
   end: number
   price: number
   status: BookingStatus
+  payment_status: PaymentStatus
+  client_deadline: string | null
+  admin_deadline: string | null
 }
 
 export interface ToastState {
@@ -115,8 +119,11 @@ export interface AppContextValue {
   isOccupied: (spaceId: string, dKey: string, start: number, end: number) => boolean
   toggleMaintenance: (spaceId: string, dKey: string) => void
   myBookings: Booking[]
-  addBooking: (b: Omit<Booking, 'id' | 'status'>) => void
+  addBooking: (b: Omit<Booking, 'id' | 'status' | 'payment_status' | 'client_deadline' | 'admin_deadline'>) => void
   cancelBooking: (id: string) => void
+  markPaid: (id: string) => void
+  confirmPayment: (id: string) => void
+  showToast: (t: ToastState) => void
   toast: ToastState | null
   parseKey: (k: string) => Date
 }

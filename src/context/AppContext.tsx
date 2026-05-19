@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import type { AppContextValue, Booking, BookingStatus, OccupancyMap, Space, ToastState, UserRole, ViewType } from '../types/app'
+import type { AppContextValue, Booking, BookingStatus, OccupancyMap, PaymentStatus, Space, ToastState, UserRole, ViewType } from '../types/app'
 import type { DbSpace, DbBooking } from '../types/database'
 import { ALL_SPACES } from '../lib/mockData'
 import { dateKey, fmtLongDate, parseKey } from '../lib/dateHelpers'
@@ -26,7 +26,10 @@ function toAppBooking(db: DbBooking & { space?: DbSpace }): Booking {
   const space = db.space ? toAppSpace(db.space) : ALL_SPACES.find(s => s.id === db.space_id)!
   const todayKey = dateKey(new Date())
   const status: BookingStatus = db.date >= todayKey ? 'upcoming' : 'past'
-  return { id: db.id, space, date: db.date, start: db.start_hour, end: db.end_hour, price: Number(db.price), status }
+  const payment_status: PaymentStatus = db.payment_status ?? 'confirmed'
+  const client_deadline = db.client_deadline ?? null
+  const admin_deadline = db.admin_deadline ?? null
+  return { id: db.id, space, date: db.date, start: db.start_hour, end: db.end_hour, price: Number(db.price), status, payment_status, client_deadline, admin_deadline }
 }
 
 const AppCtx = createContext<AppContextValue | null>(null)
@@ -77,6 +80,16 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
       .order('date', { ascending: false })
 
     if (myData) {
+      // Lazy expiry check
+      const now = new Date().toISOString()
+      const toExpire = (myData as DbBooking[]).filter(b =>
+        (b.payment_status === 'pending' && b.client_deadline && b.client_deadline < now) ||
+        (b.payment_status === 'awaiting_confirmation' && b.admin_deadline && b.admin_deadline < now)
+      )
+      if (toExpire.length > 0) {
+        await sb.from('bookings').update({ payment_status: 'expired' }).in('id', toExpire.map(b => b.id))
+        toExpire.forEach(b => { b.payment_status = 'expired' })
+      }
       setMyBookings((myData as (DbBooking & { space?: DbSpace })[]).map(toAppBooking))
     }
 
@@ -85,6 +98,7 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
       .select('space_id, date, start_hour, end_hour, user_id')
       .eq('tenant_id', tenantId)
       .neq('status', 'cancelled')
+      .neq('payment_status', 'expired')
 
     if (allData) {
       const occ: OccupancyMap = {}
@@ -115,11 +129,19 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
     return !(end <= (slot.start ?? 0) || start >= (slot.end ?? 24))
   }
 
-  function addBooking(b: Omit<Booking, 'id' | 'status'>) {
+  function addBooking(b: Omit<Booking, 'id' | 'status' | 'payment_status' | 'client_deadline' | 'admin_deadline'>) {
     if (!user || !tenant) return
 
     const tempId = `tmp-${Date.now()}`
-    const booking: Booking = { ...b, id: tempId, status: 'upcoming' }
+    const clientDeadline = new Date(Date.now() + 30 * 60 * 1000).toISOString()
+    const booking: Booking = {
+      ...b,
+      id: tempId,
+      status: 'upcoming',
+      payment_status: 'pending' as const,
+      client_deadline: clientDeadline,
+      admin_deadline: null,
+    }
     setMyBookings(bs => [booking, ...bs])
     setOccupancy(o => ({
       ...o,
@@ -128,14 +150,16 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
     showToast({ kind: 'success', title: 'Booking confirmed!', body: `${b.space.label} · ${fmtLongDate(parseKey(b.date))}` })
 
     sb.from('bookings').insert({
-      user_id:    user.id,
-      space_id:   b.space.id,
-      tenant_id:  tenant.id,
-      date:       b.date,
-      start_hour: b.start,
-      end_hour:   b.end,
-      price:      b.price,
-      status:     'upcoming',
+      user_id:         user.id,
+      space_id:        b.space.id,
+      tenant_id:       tenant.id,
+      date:            b.date,
+      start_hour:      b.start,
+      end_hour:        b.end,
+      price:           b.price,
+      status:          'upcoming',
+      payment_status:  'pending',
+      client_deadline: clientDeadline,
     }).select('id').single().then(({ data, error }: { data: { id: string } | null; error: { message: string } | null }) => {
       if (error) {
         setMyBookings(bs => bs.filter(x => x.id !== tempId))
@@ -149,6 +173,25 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
         setMyBookings(bs => bs.map(x => x.id === tempId ? { ...x, id: data.id } : x))
       }
     })
+  }
+
+  async function markPaid(id: string) {
+    const adminDeadline = new Date(Date.now() + 30 * 60 * 1000).toISOString()
+    await sb.from('bookings').update({
+      payment_status: 'awaiting_confirmation',
+      admin_deadline: adminDeadline,
+    }).eq('id', id)
+    setMyBookings(bs => bs.map(b => b.id === id
+      ? { ...b, payment_status: 'awaiting_confirmation' as const, admin_deadline: adminDeadline }
+      : b
+    ))
+    showToast({ kind: 'info', title: 'Payment submitted', body: 'Admin will confirm within 30 minutes.' })
+  }
+
+  async function confirmPayment(id: string) {
+    await sb.from('bookings').update({ payment_status: 'confirmed' }).eq('id', id)
+    setMyBookings(bs => bs.map(b => b.id === id ? { ...b, payment_status: 'confirmed' as const } : b))
+    showToast({ kind: 'success', title: 'Payment confirmed!', body: 'Booking is fully reserved.' })
   }
 
   function cancelBooking(id: string) {
@@ -191,7 +234,8 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
     userRole, setUserRole,
     spaces,
     occupancy, isOccupied, toggleMaintenance,
-    myBookings, addBooking, cancelBooking,
+    myBookings, addBooking, cancelBooking, markPaid, confirmPayment,
+    showToast,
     toast,
     parseKey,
   }

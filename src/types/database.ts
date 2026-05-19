@@ -22,16 +22,19 @@ export interface DbSpace {
 }
 
 export interface DbBooking {
-  id:         string
-  user_id:    string
-  space_id:   string
-  date:       string          // YYYY-MM-DD
-  start_hour: number
-  end_hour:   number
-  price:      number
-  status:     'upcoming' | 'cancelled'
-  notes:      string | null
-  created_at: string
+  id:             string
+  user_id:        string
+  space_id:       string
+  date:           string          // YYYY-MM-DD
+  start_hour:     number
+  end_hour:       number
+  price:          number
+  status:         'upcoming' | 'cancelled'
+  payment_status: 'pending' | 'awaiting_confirmation' | 'confirmed' | 'expired'
+  client_deadline: string | null
+  admin_deadline:  string | null
+  notes:          string | null
+  created_at:     string
   // joined via select('*, space:spaces(*)')
   space?: DbSpace
 }

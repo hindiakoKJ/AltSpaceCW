@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react'
 import type { Booking } from '../types/app'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 import { TYPE_META, CURRENT_USER, MEMBERS } from '../lib/mockData'
 import { DAYS, MONTHS, fmtLongDate, fmtRange } from '../lib/dateHelpers'
 import { TODAY } from '../lib/dateHelpers'
 import { Icon } from '../components/ui/Icon'
 import { Avatar } from '../components/ui/Avatar'
+import { CountdownTimer } from '../components/ui/CountdownTimer'
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
@@ -58,7 +60,14 @@ function DetailChip({ icon, label }: { icon: string; label: string }) {
   )
 }
 
-function UpcomingCard({ booking, onCancel }: { booking: Booking; onCancel: () => void }) {
+function UpcomingCard({
+  booking, onCancel, onMarkPaid, onConfirmPayment,
+}: {
+  booking: Booking
+  onCancel: () => void
+  onMarkPaid: () => void
+  onConfirmPayment: () => void
+}) {
   const app  = useApp()
   const d    = app.parseKey(booking.date)
   const meta = TYPE_META[booking.space.type]
@@ -68,6 +77,8 @@ function UpcomingCard({ booking, onCancel }: { booking: Booking; onCancel: () =>
 
   const daysUntil = Math.round((d.getTime() - TODAY.getTime()) / (1000 * 60 * 60 * 24))
   const daysLabel = daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil} days`
+
+  const ps = booking.payment_status
 
   return (
     <div className="group relative flex overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft transition hover:shadow-soft-lg">
@@ -92,10 +103,63 @@ function UpcomingCard({ booking, onCancel }: { booking: Booking; onCancel: () =>
         </div>
 
         <div className="mt-5 flex items-center gap-3">
-          <DetailChip icon="Clock"      label={`${booking.end - booking.start} hours`} />
+          <DetailChip icon="Clock"    label={`${booking.end - booking.start} hours`} />
           <DetailChip icon="Banknote" label={`₱${booking.price.toLocaleString()}`} />
-          <DetailChip icon="QrCode"     label={`Check-in ${booking.space.id}`} />
+          <DetailChip icon="QrCode"   label={`Check-in ${booking.space.id}`} />
         </div>
+
+        {/* Payment status banner */}
+        {ps === 'pending' && booking.client_deadline && (
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-xs text-amber-800">
+                <span className="font-semibold">Payment pending.</span> Complete within{' '}
+                <CountdownTimer deadline={booking.client_deadline} />
+              </div>
+              <button
+                onClick={onMarkPaid}
+                className="shrink-0 rounded-xl bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700"
+              >
+                I&rsquo;ve paid
+              </button>
+            </div>
+          </div>
+        )}
+        {ps === 'awaiting_confirmation' && booking.admin_deadline && (
+          <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-xs text-blue-800">
+                <span className="font-semibold">Payment submitted.</span> Admin confirming within{' '}
+                <CountdownTimer deadline={booking.admin_deadline} />
+              </div>
+              <span className="shrink-0 text-xs text-blue-600">Awaiting confirmation</span>
+            </div>
+          </div>
+        )}
+        {ps === 'confirmed' && (
+          <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            Payment confirmed
+          </div>
+        )}
+        {ps === 'expired' && (
+          <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-medium text-rose-700">
+            <Icon name="AlertCircle" size={12} className="mr-1 inline-block" />
+            Expired — slot released
+          </div>
+        )}
+
+        {/* Admin confirm button (only in admin role) */}
+        {ps === 'awaiting_confirmation' && app.userRole === 'admin' && (
+          <div className="mt-2">
+            <button
+              onClick={onConfirmPayment}
+              className="w-full rounded-xl bg-slate-900 py-2 text-xs font-medium text-white hover:bg-slate-700"
+            >
+              Confirm payment
+            </button>
+          </div>
+        )}
 
         <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
           <Avatar member={CURRENT_USER} size={28} ring />
@@ -140,8 +204,12 @@ function EmptyState({ title, body, onCta }: { title: string; body: string; onCta
 
 export function DashboardView() {
   const app = useApp()
+  const { profile } = useAuth()
+  const firstName = profile?.full_name?.split(' ')[0] || 'there'
 
-  const upcoming = app.myBookings.filter(b => b.status === 'upcoming').sort((a, b) => a.date.localeCompare(b.date))
+  const upcoming = app.myBookings
+    .filter(b => b.status === 'upcoming')
+    .sort((a, b) => a.date.localeCompare(b.date))
   const past     = app.myBookings.filter(b => b.status === 'past').sort((a, b) => b.date.localeCompare(a.date))
 
   const totalSpend   = past.reduce((s, b) => s + b.price, 0)
@@ -156,7 +224,7 @@ export function DashboardView() {
         <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Your portal</div>
         <div className="mt-2 flex items-end justify-between gap-8">
           <h1 className="text-[56px] leading-[1.05] tracking-tight text-slate-900">
-            Welcome back, <span className="serif-italic text-amber-700">Maya.</span>
+            Welcome back, <span className="serif-italic text-amber-700">{firstName}.</span>
             <br />
             You have <span className="serif-italic">{upcoming.length} bookings</span> on the horizon.
           </h1>
@@ -210,7 +278,13 @@ export function DashboardView() {
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {upcoming.map(b => (
-              <UpcomingCard key={b.id} booking={b} onCancel={() => app.cancelBooking(b.id)} />
+              <UpcomingCard
+                key={b.id}
+                booking={b}
+                onCancel={() => app.cancelBooking(b.id)}
+                onMarkPaid={() => app.markPaid(b.id)}
+                onConfirmPayment={() => app.confirmPayment(b.id)}
+              />
             ))}
           </div>
         )}
