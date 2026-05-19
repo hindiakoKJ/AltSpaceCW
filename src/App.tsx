@@ -40,7 +40,7 @@ function RootRedirect() {
   const { session, profile, loading } = useAuth()
   if (loading) return <LoadingScreen />
   if (!session) return <Navigate to="/login" replace />
-  if (!profile) return <LoadingScreen />
+  if (!profile) return <Navigate to="/login" replace />
 
   if (profile.role === 'console') return <Navigate to="/console" replace />
 
