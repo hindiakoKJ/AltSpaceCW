@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { TenantProvider } from './context/TenantContext'
 import { AppProvider } from './context/AppContext'
@@ -53,8 +53,9 @@ function RootRedirect() {
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth()
+  const { slug } = useParams<{ slug?: string }>()
   if (loading) return <LoadingScreen />
-  if (!session) return <Navigate to="/login" replace />
+  if (!session) return <Navigate to={slug ? `/login?workspace=${slug}` : '/login'} replace />
   return <>{children}</>
 }
 

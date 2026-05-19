@@ -1,31 +1,33 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Logo } from '../components/layout/Logo'
 
 export default function LoginPage() {
   const { signIn, signUp } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
-  const [mode,     setMode]     = useState<'login' | 'signup'>('login')
-  const [email,    setEmail]    = useState('')
-  const [password, setPassword] = useState('')
-  const [name,     setName]     = useState('')
-  const [confirm,  setConfirm]  = useState('')
-  const [error,    setError]    = useState('')
-  const [info,     setInfo]     = useState('')
-  const [loading,  setLoading]  = useState(false)
+  const [mode,      setMode]      = useState<'login' | 'signup'>('login')
+  const [workspace, setWorkspace] = useState(searchParams.get('workspace') ?? '')
+  const [email,     setEmail]     = useState('')
+  const [password,  setPassword]  = useState('')
+  const [name,      setName]      = useState('')
+  const [confirm,   setConfirm]   = useState('')
+  const [error,     setError]     = useState('')
+  const [info,      setInfo]      = useState('')
+  const [loading,   setLoading]   = useState(false)
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
     const { error } = await signIn(email, password)
+    setLoading(false)
     if (error) {
       setError(error.message)
-      setLoading(false)
     } else {
-      navigate('/', { replace: true })
+      navigate(workspace.trim() ? `/${workspace.trim()}` : '/', { replace: true })
     }
   }
 
@@ -33,10 +35,11 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setInfo('')
-    if (password !== confirm) { setError('Passwords do not match.'); return }
-    if (password.length < 6)  { setError('Password must be at least 6 characters.'); return }
+    if (!workspace.trim())       { setError('Workspace ID is required.'); return }
+    if (password !== confirm)    { setError('Passwords do not match.'); return }
+    if (password.length < 6)     { setError('Password must be at least 6 characters.'); return }
     setLoading(true)
-    const { error } = await signUp(email, password, name)
+    const { error } = await signUp(email, password, name, workspace.trim())
     setLoading(false)
     if (error) {
       setError(error.message)
@@ -79,6 +82,23 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={mode === 'login' ? handleLogin : handleSignup} className="mt-6 space-y-4">
+
+            {/* Workspace ID — always first */}
+            <div>
+              <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Workspace ID</label>
+              <input
+                type="text"
+                value={workspace}
+                onChange={e => setWorkspace(e.target.value)}
+                required={mode === 'signup'}
+                placeholder="your-workspace-id"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-stone-50 px-4 py-3 font-mono text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white"
+              />
+              <p className="mt-1 text-[11px] text-slate-400">
+                {mode === 'signup' ? 'Provided by your co-working space.' : 'Leave blank if signing in to console.'}
+              </p>
+            </div>
+
             {mode === 'signup' && (
               <div>
                 <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Full name</label>
@@ -87,18 +107,21 @@ export default function LoginPage() {
                   className="mt-1.5 w-full rounded-xl border border-slate-200 bg-stone-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white" />
               </div>
             )}
+
             <div>
               <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Email</label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
                 placeholder="you@example.com"
                 className="mt-1.5 w-full rounded-xl border border-slate-200 bg-stone-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white" />
             </div>
+
             <div>
               <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Password</label>
               <input type="password" value={password} onChange={e => setPassword(e.target.value)} required
                 placeholder="••••••••"
                 className="mt-1.5 w-full rounded-xl border border-slate-200 bg-stone-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white" />
             </div>
+
             {mode === 'signup' && (
               <div>
                 <label className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Confirm password</label>
@@ -107,7 +130,9 @@ export default function LoginPage() {
                   className="mt-1.5 w-full rounded-xl border border-slate-200 bg-stone-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white" />
               </div>
             )}
+
             {error && <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>}
+
             <button type="submit" disabled={loading}
               className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50">
               {loading
