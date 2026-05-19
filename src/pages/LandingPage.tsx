@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Wordmark } from '../components/layout/Wordmark'
+import { Logo } from '../components/layout/Logo'
 import { Icon } from '../components/ui/Icon'
 
 export default function LandingPage() {
@@ -9,7 +9,16 @@ export default function LandingPage() {
       {/* ─── Nav ─────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-[#F6F4EF]/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Wordmark height={40} />
+          <div className="flex items-center gap-3">
+            <Logo />
+            <div className="text-left leading-none">
+              <div className="flex items-center gap-1.5">
+                <span className="font-serif text-xl text-slate-900">AltSpace</span>
+                <span className="rounded-md bg-amber-500 px-1.5 py-0.5 font-mono text-[11px] font-bold text-slate-900 leading-none">CW</span>
+              </div>
+              <div className="text-[10px] italic text-slate-500">a place to do the work.</div>
+            </div>
+          </div>
 
           <nav className="hidden items-center gap-8 md:flex">
             <a href="#features"    className="text-sm text-slate-600 transition-colors hover:text-slate-900">Features</a>
@@ -327,7 +336,16 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-6 py-12">
           <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
             <div>
-              <Wordmark height={36} />
+              <div className="flex items-center gap-3">
+                <Logo />
+                <div className="text-left leading-none">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-serif text-xl text-slate-900">AltSpace</span>
+                    <span className="rounded-md bg-amber-500 px-1.5 py-0.5 font-mono text-[11px] font-bold text-slate-900 leading-none">CW</span>
+                  </div>
+                  <div className="text-[10px] italic text-slate-500">a place to do the work.</div>
+                </div>
+              </div>
             </div>
             <nav className="flex flex-wrap items-center gap-6 text-sm text-slate-500">
               <Link to="/privacy" className="transition-colors hover:text-slate-900">Privacy Policy</Link>
