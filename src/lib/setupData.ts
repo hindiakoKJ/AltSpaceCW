@@ -11,6 +11,7 @@ export const DEFAULT_PROFILE: StudioProfile = {
   phone:    '+63 2 8553 0001',
   email:    'hello@altspacecw.hnscorpph.com',
   website:  'altspacecw.hnscorpph.com',
+  booking_buffer_hours: 4,
   hours: {
     mon: { open: true, from: '08:00', to: '22:00' },
     tue: { open: true, from: '08:00', to: '22:00' },

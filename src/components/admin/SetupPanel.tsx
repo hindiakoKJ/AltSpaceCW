@@ -7,6 +7,9 @@ import {
   HOUR_OPTIONS, fmtHourOption,
 } from '../../lib/setupData'
 import { Icon } from '../ui/Icon'
+import { useApp } from '../../context/AppContext'
+
+const BUFFER_OPTIONS = [1, 2, 3, 4, 6, 8, 12, 24]
 
 /* ── helpers ────────────────────────────────────────────────────────── */
 
@@ -110,7 +113,8 @@ function SaveBar({ onSave }: { onSave: () => void }) {
 /* ── Studio Profile section ─────────────────────────────────────────── */
 
 function StudioProfileSection() {
-  const [profile, setProfile] = useState<StudioProfile>(DEFAULT_PROFILE)
+  const { bookingBufferHours, setBookingBufferHours } = useApp()
+  const [profile, setProfile] = useState<StudioProfile>({ ...DEFAULT_PROFILE, booking_buffer_hours: bookingBufferHours })
   const [saved, setSaved] = useState(false)
 
   function setField<K extends keyof StudioProfile>(k: K, v: StudioProfile[K]) {
@@ -127,6 +131,8 @@ function StudioProfileSection() {
   }
 
   function handleSave() {
+    // Push buffer setting to AppContext so BookingView picks it up immediately
+    setBookingBufferHours(profile.booking_buffer_hours)
     // TODO: persist to Supabase via upsert on studio_settings table
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
@@ -257,6 +263,34 @@ function StudioProfileSection() {
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Advance booking notice */}
+          <div className="mt-6 border-t border-slate-100 pt-5">
+            <div className="flex items-start justify-between gap-6">
+              <div>
+                <div className="text-sm font-medium text-slate-900">Advance booking notice</div>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Same-day reservations must be made at least this many hours before the start time.
+                  Slots within this window are locked on the client booking page.
+                </p>
+              </div>
+              <div className="shrink-0">
+                <select
+                  value={profile.booking_buffer_hours}
+                  onChange={e => {
+                    const v = Number(e.target.value)
+                    setProfile(p => ({ ...p, booking_buffer_hours: v }))
+                    setSaved(false)
+                  }}
+                  className="rounded-xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-900 focus:border-slate-900 focus:outline-none"
+                >
+                  {BUFFER_OPTIONS.map(h => (
+                    <option key={h} value={h}>{h} hour{h !== 1 ? 's' : ''} in advance</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
         </div>
       </div>

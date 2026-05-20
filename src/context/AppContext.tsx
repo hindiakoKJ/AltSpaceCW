@@ -38,12 +38,13 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
   const { user, profile } = useAuth()
   const { tenant } = useTenant()
 
-  const [view,       setView]       = useState<ViewType>(initialView)
-  const [userRole,   setUserRole]   = useState<UserRole>((profile?.role as UserRole) ?? 'client')
-  const [spaces,     setSpaces]     = useState<Space[]>(ALL_SPACES)
-  const [occupancy,  setOccupancy]  = useState<OccupancyMap>({})
-  const [myBookings, setMyBookings] = useState<Booking[]>([])
-  const [toast,      setToast]      = useState<ToastState | null>(null)
+  const [view,                setView]                = useState<ViewType>(initialView)
+  const [userRole,            setUserRole]            = useState<UserRole>((profile?.role as UserRole) ?? 'client')
+  const [spaces,              setSpaces]              = useState<Space[]>(ALL_SPACES)
+  const [occupancy,           setOccupancy]           = useState<OccupancyMap>({})
+  const [myBookings,          setMyBookings]          = useState<Booking[]>([])
+  const [toast,               setToast]               = useState<ToastState | null>(null)
+  const [bookingBufferHours,  setBookingBufferHours]  = useState<number>(4)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Sync role from Supabase profile
@@ -238,6 +239,7 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
     showToast,
     toast,
     parseKey,
+    bookingBufferHours, setBookingBufferHours,
   }
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>

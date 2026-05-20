@@ -69,14 +69,14 @@ export function BookingView() {
     return app.spaces.filter(s => s.type === filter)
   }, [filter, app.spaces])
 
-  /* ── Same-day 4-hour buffer ──────────────────────────────────── */
+  /* ── Same-day advance booking buffer ────────────────────────── */
   const isToday = dateKey(selectedDate) === dateKey(TODAY)
   const minHour = useMemo(() => {
     if (!isToday) return 8
     const now = new Date()
-    // ceil to next whole hour then add 4-hour buffer
-    return now.getHours() + (now.getMinutes() > 0 ? 1 : 0) + 4
-  }, [isToday])
+    // ceil to next whole hour then add the operator-configured buffer
+    return now.getHours() + (now.getMinutes() > 0 ? 1 : 0) + app.bookingBufferHours
+  }, [isToday, app.bookingBufferHours])
   const noSlotsToday = isToday && minHour > 19
 
   // Drop locked slots whenever the buffer changes (e.g. user navigates back to today)

@@ -86,6 +86,7 @@ export interface StudioProfile {
   email: string
   website: string
   hours: Record<string, DayHours>
+  booking_buffer_hours: number
 }
 
 export interface MembershipPlan {
@@ -126,4 +127,6 @@ export interface AppContextValue {
   showToast: (t: ToastState) => void
   toast: ToastState | null
   parseKey: (k: string) => Date
+  bookingBufferHours: number
+  setBookingBufferHours: (h: number) => void
 }
