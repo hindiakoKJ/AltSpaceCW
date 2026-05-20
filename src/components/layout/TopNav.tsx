@@ -46,7 +46,7 @@ export function TopNav() {
       <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:gap-6 sm:px-6 sm:py-4 lg:px-8">
 
         {/* Brand */}
-        <button onClick={() => app.setView('book')} className="flex items-center gap-2.5">
+        <button onClick={() => app.setView(app.userRole === 'admin' ? 'admin' : 'book')} className="flex items-center gap-2.5">
           {logoUrl
             ? <img src={logoUrl} alt={studioName} className="h-9 w-9 rounded-xl object-contain" />
             : <Logo />
