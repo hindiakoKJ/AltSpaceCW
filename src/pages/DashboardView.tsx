@@ -69,8 +69,21 @@ function UpcomingCard({
   onConfirmPayment: () => void
 }) {
   const app  = useApp()
+  const { profile } = useAuth()
   const d    = app.parseKey(booking.date)
   const meta = TYPE_META[booking.space.type]
+
+  const fullName   = profile?.full_name ?? null
+  const avatarText = (() => {
+    if (fullName?.trim()) {
+      const parts = fullName.trim().split(' ')
+      return parts.length >= 2
+        ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+        : fullName.slice(0, 2).toUpperCase()
+    }
+    return (profile?.email ?? '??').slice(0, 2).toUpperCase()
+  })()
+  const meForAvatar = { name: fullName ?? 'Me', avatar: avatarText, color: 'bg-amber-100 text-amber-900', plan: '' }
 
   const accentBg = { amber: 'bg-amber-100 text-amber-900', emerald: 'bg-emerald-100 text-emerald-900', slate: 'bg-slate-900 text-white' }[meta.accent]
   const sidebar  = { amber: 'from-amber-500 to-amber-300', emerald: 'from-emerald-500 to-emerald-300', slate: 'from-slate-900 to-slate-600' }[meta.accent]
@@ -206,18 +219,6 @@ export function DashboardView() {
   const app = useApp()
   const { profile } = useAuth()
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
-
-  const fullName = profile?.full_name ?? null
-  const avatarText = (() => {
-    if (fullName?.trim()) {
-      const parts = fullName.trim().split(' ')
-      return parts.length >= 2
-        ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-        : fullName.slice(0, 2).toUpperCase()
-    }
-    return (profile?.email ?? '??').slice(0, 2).toUpperCase()
-  })()
-  const meForAvatar = { name: firstName, avatar: avatarText, color: 'bg-amber-100 text-amber-900', plan: '' }
 
   const upcoming = app.myBookings
     .filter(b => b.status === 'upcoming')
