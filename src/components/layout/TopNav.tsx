@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { useAuth } from '../../context/AuthContext'
@@ -6,6 +7,7 @@ import type { ViewType } from '../../types/app'
 import { Avatar } from '../ui/Avatar'
 import { Icon } from '../ui/Icon'
 import { Logo } from './Logo'
+import { ProfileModal } from './ProfileModal'
 
 const CLIENT_TABS: { id: ViewType; label: string; icon: string }[] = [
   { id: 'book',      label: 'Book a space', icon: 'Calendar'   },
@@ -34,6 +36,7 @@ export function TopNav() {
     return (email ?? '??').slice(0, 2).toUpperCase()
   })()
   const meForAvatar = { name: displayName, avatar: avatarText, color: 'bg-amber-100 text-amber-900', plan: '' }
+  const [showProfile, setShowProfile] = useState(false)
 
   return (
     <div className="sticky top-0 z-30 border-b border-slate-200/70 bg-[#F6F4EF]/85 backdrop-blur-md">
@@ -96,6 +99,13 @@ export function TopNav() {
               <Icon name="ChevronDown" size={14} className="text-slate-400" />
             </button>
             <div className="absolute right-0 top-full mt-1.5 hidden w-48 rounded-2xl border border-slate-200 bg-white py-1.5 shadow-lg group-focus-within:block group-hover:block">
+              <button
+                onClick={() => setShowProfile(true)}
+                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-stone-50"
+              >
+                <Icon name="User" size={14} />
+                My profile
+              </button>
               {profile?.role === 'console' && (
                 <button
                   onClick={() => navigate('/console')}
@@ -105,9 +115,10 @@ export function TopNav() {
                   Console
                 </button>
               )}
+              <div className="my-1 border-t border-slate-100" />
               <button
                 onClick={() => signOut()}
-                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-stone-50"
+                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50"
               >
                 <Icon name="LogOut" size={14} />
                 Sign out
@@ -132,6 +143,8 @@ export function TopNav() {
           </button>
         ))}
       </div>
+
+      {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
     </div>
   )
 }
