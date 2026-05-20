@@ -6,7 +6,6 @@ import type { ViewType } from '../../types/app'
 import { Avatar } from '../ui/Avatar'
 import { Icon } from '../ui/Icon'
 import { Logo } from './Logo'
-import { CURRENT_USER } from '../../lib/mockData'
 
 const CLIENT_TABS: { id: ViewType; label: string; icon: string }[] = [
   { id: 'book',      label: 'Book a space', icon: 'Calendar'   },
@@ -22,6 +21,19 @@ export function TopNav() {
   const navigate  = useNavigate()
   const tabs = app.userRole === 'admin' ? [ADMIN_TAB] : CLIENT_TABS
   const displayName = profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'You'
+
+  const fullName = profile?.full_name ?? null
+  const email    = user?.email ?? null
+  const avatarText = (() => {
+    if (fullName?.trim()) {
+      const parts = fullName.trim().split(' ')
+      return parts.length >= 2
+        ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+        : fullName.slice(0, 2).toUpperCase()
+    }
+    return (email ?? '??').slice(0, 2).toUpperCase()
+  })()
+  const meForAvatar = { name: displayName, avatar: avatarText, color: 'bg-amber-100 text-amber-900', plan: '' }
 
   return (
     <div className="sticky top-0 z-30 border-b border-slate-200/70 bg-[#F6F4EF]/85 backdrop-blur-md">
@@ -79,7 +91,7 @@ export function TopNav() {
 
           <div className="relative group">
             <button className="flex items-center gap-2 rounded-full border border-slate-200 bg-white pl-1 pr-3 py-1 hover:border-slate-300">
-              <Avatar member={CURRENT_USER} size={28} />
+              <Avatar member={meForAvatar} size={28} />
               <span className="hidden text-sm font-medium text-slate-900 sm:block">{displayName}</span>
               <Icon name="ChevronDown" size={14} className="text-slate-400" />
             </button>

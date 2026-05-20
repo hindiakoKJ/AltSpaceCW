@@ -2,8 +2,18 @@ import type { ReactNode } from 'react'
 import type { Space } from '../../types/app'
 import { Avatar } from '../ui/Avatar'
 import { Icon } from '../ui/Icon'
-import { CURRENT_USER } from '../../lib/mockData'
+import { useAuth } from '../../context/AuthContext'
 import { fmtLongDate, fmtRange } from '../../lib/dateHelpers'
+
+function initials(name: string | null | undefined, email: string | null | undefined) {
+  if (name?.trim()) {
+    const parts = name.trim().split(' ')
+    return parts.length >= 2
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : name.slice(0, 2).toUpperCase()
+  }
+  return (email ?? '??').slice(0, 2).toUpperCase()
+}
 
 interface BookingSummaryProps {
   date:      Date
@@ -30,6 +40,10 @@ function SummaryLine({ icon, label, value }: { icon: string; label: string; valu
 }
 
 export function BookingSummary({ date, range, space, total, hours, onConfirm, onClear }: BookingSummaryProps) {
+  const { profile } = useAuth()
+  const displayName = profile?.full_name || profile?.email?.split('@')[0] || 'Member'
+  const avatarInitials = initials(profile?.full_name, profile?.email)
+  const me = { name: displayName, avatar: avatarInitials, color: 'bg-amber-100 text-amber-900', plan: '' }
   const ready = !!space && !!range
 
   return (
@@ -108,9 +122,9 @@ export function BookingSummary({ date, range, space, total, hours, onConfirm, on
 
       {/* Member badge */}
       <div className="mt-4 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-soft">
-        <Avatar member={CURRENT_USER} size={36} />
+        <Avatar member={me} size={36} />
         <div className="flex-1">
-          <div className="text-sm font-semibold text-slate-900">{CURRENT_USER.name}</div>
+          <div className="text-sm font-semibold text-slate-900">{displayName}</div>
           <div className="text-xs text-slate-500">Resident plan · 8 day-credits left this month</div>
         </div>
         <Icon name="BadgeCheck" size={18} className="text-amber-600" />

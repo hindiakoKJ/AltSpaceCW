@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import type { Booking } from '../types/app'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
-import { TYPE_META, CURRENT_USER, MEMBERS } from '../lib/mockData'
+import { TYPE_META } from '../lib/mockData'
 import { DAYS, MONTHS, fmtLongDate, fmtRange } from '../lib/dateHelpers'
 import { TODAY } from '../lib/dateHelpers'
 import { Icon } from '../components/ui/Icon'
@@ -162,7 +162,7 @@ function UpcomingCard({
         )}
 
         <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
-          <Avatar member={CURRENT_USER} size={28} ring />
+          <Avatar member={meForAvatar} size={28} ring />
           <div className="flex gap-2">
             <button className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-300 hover:bg-stone-50">
               <Icon name="Calendar" size={12} className="mr-1 inline-block" />
@@ -206,6 +206,18 @@ export function DashboardView() {
   const app = useApp()
   const { profile } = useAuth()
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
+
+  const fullName = profile?.full_name ?? null
+  const avatarText = (() => {
+    if (fullName?.trim()) {
+      const parts = fullName.trim().split(' ')
+      return parts.length >= 2
+        ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+        : fullName.slice(0, 2).toUpperCase()
+    }
+    return (profile?.email ?? '??').slice(0, 2).toUpperCase()
+  })()
+  const meForAvatar = { name: firstName, avatar: avatarText, color: 'bg-amber-100 text-amber-900', plan: '' }
 
   const upcoming = app.myBookings
     .filter(b => b.status === 'upcoming')
@@ -380,4 +392,3 @@ export function DashboardView() {
 }
 
 // suppress unused import
-void MEMBERS
