@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { AppContextValue, Booking, BookingStatus, OccupancyMap, PaymentStatus, Space, Subscription, ToastState, UserRole, ViewType } from '../types/app'
-import type { DbSpace, DbBooking, DbSubscription } from '../types/database'
+import type { DbSpace, DbBooking, DbSubscription, DbStudioSettings } from '../types/database'
 import { ALL_SPACES } from '../lib/mockData'
 import { dateKey, fmtLongDate, parseKey } from '../lib/dateHelpers'
 import { supabase } from '../lib/supabase'
@@ -66,6 +66,18 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
   useEffect(() => {
     if (profile) setUserRole(profile.role as UserRole)
   }, [profile])
+
+  // Load studio settings (booking buffer hours etc.)
+  useEffect(() => {
+    if (!tenant) return
+    sb.from('studio_settings')
+      .select('booking_buffer_hours')
+      .eq('tenant_id', tenant.id)
+      .maybeSingle()
+      .then(({ data }: { data: Pick<DbStudioSettings, 'booking_buffer_hours'> | null }) => {
+        if (data?.booking_buffer_hours != null) setBookingBufferHours(data.booking_buffer_hours)
+      })
+  }, [tenant?.id])
 
   // Load tenant spaces
   useEffect(() => {

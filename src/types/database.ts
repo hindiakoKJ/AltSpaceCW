@@ -1,5 +1,21 @@
 // Database types — mirrors supabase/schema.sql exactly
 
+export interface DbStudioSettings {
+  id:                   string
+  tenant_id:            string
+  name:                 string
+  tagline:              string
+  address:              string
+  city:                 string
+  timezone:             string
+  phone:                string
+  email:                string
+  website:              string
+  booking_buffer_hours: number
+  hours:                Record<string, { open: boolean; from: string; to: string }>
+  updated_at:           string
+}
+
 export interface DbSubscription {
   id:            string
   tenant_id:     string
@@ -75,6 +91,11 @@ export interface Database {
         Row:    DbSubscription
         Insert: Omit<DbSubscription, 'id' | 'created_at'>
         Update: Partial<Omit<DbSubscription, 'id' | 'created_at'>>
+      }
+      studio_settings: {
+        Row:    DbStudioSettings
+        Insert: Omit<DbStudioSettings, 'id'>
+        Update: Partial<Omit<DbStudioSettings, 'id'>>
       }
     }
     Views: Record<string, never>

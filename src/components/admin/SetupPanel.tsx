@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Space, SpaceType, MembershipPlan, AmenityItem } from '../../types/app'
 import type { StudioProfile } from '../../types/app'
+import type { DbStudioSettings } from '../../types/database'
 import { ALL_SPACES } from '../../lib/mockData'
 import {
   DEFAULT_PROFILE, DEFAULT_PLANS, DEFAULT_AMENITIES,
@@ -103,15 +104,24 @@ function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean
   )
 }
 
-function SaveBar({ onSave }: { onSave: () => void }) {
+function SaveBar({ onSave, saving = false, saved = false, error = '' }: {
+  onSave: () => void
+  saving?: boolean
+  saved?: boolean
+  error?: string
+}) {
   return (
     <div className="mt-8 flex items-center justify-end gap-3 rounded-2xl border border-slate-200 bg-stone-50 px-5 py-4">
-      <span className="text-sm text-slate-500">Changes are applied to your live booking page.</span>
+      {error && <span className="text-sm text-rose-600">{error}</span>}
+      {saved && !error && <span className="flex items-center gap-1.5 text-sm text-emerald-600"><Icon name="CheckCircle2" size={14} /> Saved</span>}
+      {!saved && !error && <span className="text-sm text-slate-500">Changes are applied to your live booking page.</span>}
       <button
         onClick={onSave}
-        className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800 transition"
+        disabled={saving}
+        className="flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50 transition"
       >
-        Save changes
+        {saving && <Icon name="Loader" size={14} className="animate-spin" />}
+        {saving ? 'Saving…' : 'Save changes'}
       </button>
     </div>
   )
@@ -121,12 +131,40 @@ function SaveBar({ onSave }: { onSave: () => void }) {
 
 function StudioProfileSection() {
   const { bookingBufferHours, setBookingBufferHours } = useApp()
+  const { tenant } = useTenant()
   const [profile, setProfile] = useState<StudioProfile>({ ...DEFAULT_PROFILE, booking_buffer_hours: bookingBufferHours })
-  const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saved,  setSaved]  = useState(false)
+  const [saveErr, setSaveErr] = useState('')
+
+  // Load from DB on mount
+  useEffect(() => {
+    if (!tenant) return
+    sb.from('studio_settings')
+      .select('*')
+      .eq('tenant_id', tenant.id)
+      .maybeSingle()
+      .then(({ data }: { data: DbStudioSettings | null }) => {
+        if (data) {
+          setProfile({
+            name:                 data.name,
+            tagline:              data.tagline,
+            address:              data.address,
+            city:                 data.city,
+            timezone:             data.timezone,
+            phone:                data.phone,
+            email:                data.email,
+            website:              data.website,
+            booking_buffer_hours: data.booking_buffer_hours,
+            hours:                data.hours as StudioProfile['hours'],
+          })
+        }
+      })
+  }, [tenant?.id])
 
   function setField<K extends keyof StudioProfile>(k: K, v: StudioProfile[K]) {
     setProfile(p => ({ ...p, [k]: v }))
-    setSaved(false)
+    setSaved(false); setSaveErr('')
   }
 
   function setHour(day: string, field: 'open' | 'from' | 'to', value: boolean | string) {
@@ -134,15 +172,39 @@ function StudioProfileSection() {
       ...p,
       hours: { ...p.hours, [day]: { ...p.hours[day], [field]: value } },
     }))
-    setSaved(false)
+    setSaved(false); setSaveErr('')
   }
 
-  function handleSave() {
-    // Push buffer setting to AppContext so BookingView picks it up immediately
-    setBookingBufferHours(profile.booking_buffer_hours)
-    // TODO: persist to Supabase via upsert on studio_settings table
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+  async function handleSave() {
+    if (!tenant) return
+    setSaving(true); setSaveErr('')
+    const { error } = await sb
+      .from('studio_settings')
+      .upsert(
+        {
+          tenant_id:            tenant.id,
+          name:                 profile.name,
+          tagline:              profile.tagline,
+          address:              profile.address,
+          city:                 profile.city,
+          timezone:             profile.timezone,
+          phone:                profile.phone,
+          email:                profile.email,
+          website:              profile.website,
+          booking_buffer_hours: profile.booking_buffer_hours,
+          hours:                profile.hours,
+          updated_at:           new Date().toISOString(),
+        },
+        { onConflict: 'tenant_id' }
+      )
+    setSaving(false)
+    if (error) {
+      setSaveErr(error.message)
+    } else {
+      setBookingBufferHours(profile.booking_buffer_hours)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    }
   }
 
   return (
@@ -302,13 +364,7 @@ function StudioProfileSection() {
         </div>
       </div>
 
-      {saved ? (
-        <div className="mt-8 flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-800">
-          <Icon name="CheckCircle2" size={16} /> Changes saved!
-        </div>
-      ) : (
-        <SaveBar onSave={handleSave} />
-      )}
+      <SaveBar onSave={handleSave} saving={saving} saved={saved} error={saveErr} />
     </div>
   )
 }
