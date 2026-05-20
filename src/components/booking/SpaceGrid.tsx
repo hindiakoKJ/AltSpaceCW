@@ -85,10 +85,10 @@ function SpaceTile({
     >
       <StatePip occupied={occupied} maintenance={maintenance} selected={selected} absolute />
       <div className={`font-serif ${isDed ? 'text-2xl' : 'text-xl'} leading-none ${occupied ? 'text-slate-400' : 'text-slate-900'}`}>
-        {space.id.split('-')[1]}
+        {space.label}
       </div>
       <div className="text-[10px] uppercase tracking-wider text-slate-400">
-        {space.type === 'hot' ? 'Hot' : 'Ded'}
+        {space.type === 'hot' ? 'Hot Desk' : 'Dedicated'}
       </div>
       {!occupied && (
         <div className="mt-0.5 font-mono text-[10px] text-slate-500">₱{space.hourly}/h</div>

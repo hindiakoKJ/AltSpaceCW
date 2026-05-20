@@ -82,9 +82,9 @@ export function CapacityTile({ hot, ded, room }: CapacityTileProps) {
       </div>
 
       <div className="mt-5 space-y-3">
-        <CapacityRow label="Hot Desks"      avail={hot.avail}  total={hot.total}  tone="amber"   subtitle="Open floor, BYO laptop" />
-        <CapacityRow label="Dedicated"      avail={ded.avail}  total={ded.total}  tone="emerald" subtitle="Quiet wing · monitor" />
-        <CapacityRow label="Meeting Room B" avail={room.avail} total={room.total} tone="slate"   subtitle="Booked until 2 PM" pinned />
+        <CapacityRow label="Hot Desks"       avail={hot.avail}  total={hot.total}  tone="amber"   subtitle="Open floor, BYO laptop" />
+        <CapacityRow label="Dedicated Desks" avail={ded.avail}  total={ded.total}  tone="emerald" subtitle="Assigned seats" />
+        {room.total > 0 && <CapacityRow label="Meeting Rooms"  avail={room.avail} total={room.total} tone="slate" subtitle="Book by the hour" />}
       </div>
     </div>
   )

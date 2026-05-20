@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import type { AppContextValue, Booking, BookingStatus, OccupancyMap, PaymentStatus, Space, StudioSettings, Subscription, ToastState, UserRole, ViewType } from '../types/app'
+import type { AmenityItem, AppContextValue, Booking, BookingStatus, OccupancyMap, PaymentStatus, Space, StudioSettings, Subscription, ToastState, UserRole, ViewType } from '../types/app'
 import type { DbSpace, DbBooking, DbSubscription, DbStudioSettings } from '../types/database'
 import { ALL_SPACES } from '../lib/mockData'
 import { dateKey, fmtLongDate, parseKey } from '../lib/dateHelpers'
@@ -73,9 +73,9 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
     if (!tenant) { setStudioSettings(null); return }
     const { data } = await sb
       .from('studio_settings')
-      .select('name, tagline, logo_url, hero_image_url, booking_buffer_hours')
+      .select('name, tagline, logo_url, hero_image_url, booking_buffer_hours, amenities')
       .eq('tenant_id', tenant.id)
-      .maybeSingle() as { data: Pick<DbStudioSettings, 'name' | 'tagline' | 'logo_url' | 'hero_image_url' | 'booking_buffer_hours'> | null }
+      .maybeSingle() as { data: Pick<DbStudioSettings, 'name' | 'tagline' | 'logo_url' | 'hero_image_url' | 'booking_buffer_hours' | 'amenities'> | null }
     if (data) {
       setBookingBufferHours(data.booking_buffer_hours)
       setStudioSettings({
@@ -83,6 +83,7 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
         tagline:      data.tagline,
         logoUrl:      data.logo_url,
         heroImageUrl: data.hero_image_url,
+        amenities:    Array.isArray(data.amenities) ? (data.amenities as AmenityItem[]) : [],
       })
     }
   }, [tenant?.id])

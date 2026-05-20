@@ -42,7 +42,7 @@ function SummaryLine({ icon, label, value }: { icon: string; label: string; valu
 
 export function BookingSummary({ date, range, space, total, hours, onConfirm, onClear }: BookingSummaryProps) {
   const { profile } = useAuth()
-  const { subscription } = useApp()
+  const { subscription, studioSettings } = useApp()
   const displayName = profile?.full_name || profile?.email?.split('@')[0] || 'Member'
   const avatarInitials = initials(profile?.full_name, profile?.email)
   const me = { name: displayName, avatar: avatarInitials, color: 'bg-amber-100 text-amber-900', plan: '' }
@@ -86,7 +86,12 @@ export function BookingSummary({ date, range, space, total, hours, onConfirm, on
           {space?.type === 'room' && (
             <SummaryLine icon="Users" label="Seats" value={`Up to ${space.capacity} people`} />
           )}
-          <SummaryLine icon="Wifi" label="Includes" value="Gigabit · espresso · printing" />
+          {(() => {
+            const enabled = (studioSettings?.amenities ?? []).filter(a => a.enabled).map(a => a.label)
+            return enabled.length > 0
+              ? <SummaryLine icon="Wifi" label="Includes" value={enabled.join(' · ')} />
+              : null
+          })()}
         </div>
 
         {/* Price */}

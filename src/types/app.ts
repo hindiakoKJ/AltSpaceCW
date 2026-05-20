@@ -127,6 +127,7 @@ export interface StudioSettings {
   tagline:       string
   logoUrl:       string | null
   heroImageUrl:  string | null
+  amenities:     AmenityItem[]
 }
 
 export interface AppContextValue {

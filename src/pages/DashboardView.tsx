@@ -424,32 +424,41 @@ export function DashboardView() {
         </div>
       </Section2>
 
-      {/* Favorites */}
-      <Section2 eyebrow="Saved" title={<>Your <span className="serif-italic">usual</span> spots.</>}>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          {[
-            { id: 'DD-04',   label: 'Dedicated 4', note: 'Quiet wing · faces north windows' },
-            { id: 'HD-07',   label: 'Hot Desk 7',  note: 'Near the espresso bar' },
-            { id: 'RM-VEGA', label: 'Vega',         note: 'Phone-booth pod · 4 seats' },
-          ].map(f => (
-            <div key={f.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-soft hover:border-slate-300">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
-                <Icon name="Star" size={18} />
-              </div>
-              <div className="flex-1">
-                <div className="font-serif text-xl text-slate-900">{f.label}</div>
-                <div className="text-xs text-slate-500">{f.note}</div>
-              </div>
-              <button
-                onClick={() => app.setView('book')}
-                className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-900 hover:text-slate-900"
-              >
-                Re-book
-              </button>
+      {/* Frequent spaces — derived from booking history */}
+      {(() => {
+        const freq = Object.values(
+          [...past, ...upcoming].reduce<Record<string, { space: typeof past[0]['space']; count: number }>>((acc, b) => {
+            if (!acc[b.space.id]) acc[b.space.id] = { space: b.space, count: 0 }
+            acc[b.space.id].count++
+            return acc
+          }, {})
+        ).sort((a, b) => b.count - a.count).slice(0, 3)
+
+        if (freq.length === 0) return null
+        return (
+          <Section2 eyebrow="Your spots" title={<>Spaces you&rsquo;ve <span className="serif-italic">booked before</span>.</>}>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              {freq.map(({ space, count }) => (
+                <div key={space.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-soft hover:border-slate-300">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
+                    <Icon name="Star" size={18} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-serif text-xl text-slate-900">{space.label}</div>
+                    <div className="text-xs text-slate-500">{space.zone} · {count} booking{count !== 1 ? 's' : ''}</div>
+                  </div>
+                  <button
+                    onClick={() => app.setView('book')}
+                    className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-900 hover:text-slate-900"
+                  >
+                    Re-book
+                  </button>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </Section2>
+          </Section2>
+        )
+      })()}
     </div>
   )
 }

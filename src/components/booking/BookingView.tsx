@@ -174,8 +174,7 @@ export function BookingView() {
               Let&rsquo;s find you <span className="serif-italic text-slate-700">a good seat.</span>
             </h1>
             <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-600">
-              The floor is open and the Atlas boardroom is free after 2 PM.
-              Book a hot desk, dedicated seat, or the whole afternoon.
+              Book a hot desk, dedicated seat, or a meeting room — by the hour or the full day.
             </p>
           </div>
           <div className="hidden shrink-0 lg:block">
