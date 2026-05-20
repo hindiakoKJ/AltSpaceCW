@@ -69,13 +69,29 @@ export function BookingView() {
     return app.spaces.filter(s => s.type === filter)
   }, [filter, app.spaces])
 
+  /* ── Same-day 4-hour buffer ──────────────────────────────────── */
+  const isToday = dateKey(selectedDate) === dateKey(TODAY)
+  const minHour = useMemo(() => {
+    if (!isToday) return 8
+    const now = new Date()
+    // ceil to next whole hour then add 4-hour buffer
+    return now.getHours() + (now.getMinutes() > 0 ? 1 : 0) + 4
+  }, [isToday])
+  const noSlotsToday = isToday && minHour > 19
+
+  // Drop locked slots whenever the buffer changes (e.g. user navigates back to today)
+  useEffect(() => {
+    setSelectedSlots(cur => cur.filter(h => h >= minHour))
+  }, [minHour])
+
   /* ── Time slot helpers ───────────────────────────────────────── */
   function toggleSlot(h: number) {
+    if (h < minHour) return
     setSelectedSlots(cur =>
       cur.includes(h) ? cur.filter(x => x !== h) : [...cur, h].sort((a, b) => a - b)
     )
   }
-  const selectFullDay = () => setSelectedSlots(HOURS)
+  const selectFullDay = () => setSelectedSlots(HOURS.filter(h => h >= minHour))
   const clearSlots    = () => setSelectedSlots([])
 
   const range = useMemo(() => {
@@ -257,31 +273,43 @@ export function BookingView() {
                   </span>
                 )}
               </div>
-              <div className="grid grid-cols-6 gap-2 sm:grid-cols-12">
-                {HOURS.map(h => {
-                  const sel     = selectedSlots.includes(h)
-                  const popular = h >= 10 && h <= 15
-                  return (
-                    <button
-                      key={h}
-                      onClick={() => toggleSlot(h)}
-                      className={`relative flex h-16 flex-col items-center justify-center rounded-xl border text-sm transition ${
-                        sel
-                          ? 'border-amber-500 bg-amber-500 text-white shadow-soft'
-                          : 'border-slate-200 bg-stone-50 text-slate-700 hover:border-slate-300 hover:bg-white'
-                      }`}
-                    >
-                      <span className={`text-[11px] uppercase tracking-wider ${sel ? 'text-amber-100' : 'text-slate-400'}`}>
-                        {h < 12 ? 'AM' : 'PM'}
-                      </span>
-                      <span className="font-serif text-xl leading-none">{((h + 11) % 12) + 1}</span>
-                      {popular && !sel && (
-                        <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-amber-400" />
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
+              {noSlotsToday ? (
+                <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-stone-50 px-5 py-4 text-sm text-slate-500">
+                  <span className="text-lg">🕐</span>
+                  <span>No same-day slots left — it's too late to book for today. Pick a future date above.</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-6 gap-2 sm:grid-cols-12">
+                  {HOURS.map(h => {
+                    const sel    = selectedSlots.includes(h)
+                    const locked = h < minHour
+                    const popular = h >= 10 && h <= 15
+                    return (
+                      <button
+                        key={h}
+                        onClick={() => toggleSlot(h)}
+                        disabled={locked}
+                        title={locked ? 'Must book at least 4 hours in advance' : undefined}
+                        className={`relative flex h-16 flex-col items-center justify-center rounded-xl border text-sm transition ${
+                          locked
+                            ? 'cursor-not-allowed border-slate-100 bg-slate-50 opacity-35'
+                            : sel
+                              ? 'border-amber-500 bg-amber-500 text-white shadow-soft'
+                              : 'border-slate-200 bg-stone-50 text-slate-700 hover:border-slate-300 hover:bg-white'
+                        }`}
+                      >
+                        <span className={`text-[11px] uppercase tracking-wider ${sel ? 'text-amber-100' : 'text-slate-400'}`}>
+                          {h < 12 ? 'AM' : 'PM'}
+                        </span>
+                        <span className="font-serif text-xl leading-none">{((h + 11) % 12) + 1}</span>
+                        {popular && !sel && !locked && (
+                          <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-amber-400" />
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           </Section>
 
