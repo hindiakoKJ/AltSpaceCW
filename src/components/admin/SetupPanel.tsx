@@ -962,7 +962,7 @@ function AmenitiesSection() {
 type MemberRow = { id: string; full_name: string | null; email: string; created_at: string }
 
 function MembersSection() {
-  const { user } = useAuth()
+  useAuth()
   const { tenant } = useTenant()
 
   const [members, setMembers]     = useState<MemberRow[]>([])
