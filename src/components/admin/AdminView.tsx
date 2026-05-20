@@ -127,7 +127,7 @@ function BreakdownCard({ type, day, spaces }: { type: string; day: Record<string
   const list  = spaces.filter(s => s.type === type)
   const used  = list.filter(s => day[s.id] && !day[s.id].maintenance).length
   const total = list.length
-  const pct   = (used / total) * 100
+  const pct   = total > 0 ? (used / total) * 100 : 0
   const meta  = TYPE_META[type]
   const accentBar = { amber: 'bg-amber-500', emerald: 'bg-emerald-500', slate: 'bg-slate-700' }[meta.accent]
 
@@ -278,7 +278,7 @@ function InventoryTile({
       className={`relative w-full rounded-2xl border ${baseCls} p-3 text-left transition`}
     >
       <div className="font-serif text-xl text-slate-900">
-        {isRoom ? space.label : space.id.split('-')[1]}
+        {space.label}
       </div>
       <div className="text-[10px] uppercase tracking-wider text-slate-400">
         {isRoom ? `${TYPE_META[space.type].label} · ${space.capacity}p` : TYPE_META[space.type].label}
