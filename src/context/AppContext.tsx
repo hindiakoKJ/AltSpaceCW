@@ -53,7 +53,7 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
   const { tenant } = useTenant()
 
   const [view,                setView]                = useState<ViewType>(initialView)
-  const [userRole,            setUserRole]            = useState<UserRole>((profile?.role as UserRole) ?? 'client')
+  const [userRole,            setUserRole]            = useState<UserRole>((profile?.role as UserRole) ?? 'client') // internal only, not exposed in context
   const [spaces,              setSpaces]              = useState<Space[]>(ALL_SPACES)
   const [occupancy,           setOccupancy]           = useState<OccupancyMap>({})
   const [myBookings,          setMyBookings]          = useState<Booking[]>([])
@@ -161,25 +161,56 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
       setMyBookings((myData as (DbBooking & { space?: DbSpace })[]).map(toAppBooking))
     }
 
-    const { data: allData } = await sb
-      .from('bookings')
-      .select('space_id, date, start_hour, end_hour, user_id')
-      .eq('tenant_id', tenantId)
-      .neq('status', 'cancelled')
-      .neq('payment_status', 'expired')
+    // Occupancy: only fetch what's needed — no user_id exposed to client
+    const [{ data: allData }, { data: maintData }] = await Promise.all([
+      sb.from('bookings')
+        .select('space_id, date, start_hour, end_hour')
+        .eq('tenant_id', tenantId)
+        .neq('status', 'cancelled')
+        .neq('payment_status', 'expired'),
+      sb.from('maintenance_slots')
+        .select('space_id, date')
+        .eq('tenant_id', tenantId),
+    ])
 
-    if (allData) {
+    if (allData || maintData) {
       const occ: OccupancyMap = {}
-      for (const b of allData as { space_id: string; date: string; start_hour: number; end_hour: number; user_id: string }[]) {
-        if (!occ[b.date]) occ[b.date] = {}
-        if (!occ[b.date][b.space_id]) {
-          occ[b.date][b.space_id] = {
-            start: b.start_hour,
-            end:   b.end_hour,
-            ...(b.user_id === userId ? { mine: true as const } : {}),
+
+      // Own bookings (user_id match) — fetch separately to preserve 'mine' flag
+      if (allData) {
+        for (const b of allData as { space_id: string; date: string; start_hour: number; end_hour: number }[]) {
+          if (!occ[b.date]) occ[b.date] = {}
+          if (!occ[b.date][b.space_id]) {
+            occ[b.date][b.space_id] = { start: b.start_hour, end: b.end_hour }
           }
         }
       }
+
+      // Mark own bookings with 'mine' flag (separate query scoped to user)
+      const { data: mySlots } = await sb
+        .from('bookings')
+        .select('space_id, date, start_hour, end_hour')
+        .eq('tenant_id', tenantId)
+        .eq('user_id', userId)
+        .neq('status', 'cancelled')
+        .neq('payment_status', 'expired')
+
+      if (mySlots) {
+        for (const b of mySlots as { space_id: string; date: string; start_hour: number; end_hour: number }[]) {
+          if (occ[b.date]?.[b.space_id]) {
+            occ[b.date][b.space_id] = { ...occ[b.date][b.space_id], mine: true as const }
+          }
+        }
+      }
+
+      // Merge maintenance slots
+      if (maintData) {
+        for (const m of maintData as { space_id: string; date: string }[]) {
+          if (!occ[m.date]) occ[m.date] = {}
+          occ[m.date][m.space_id] = { maintenance: true as const }
+        }
+      }
+
       setOccupancy(occ)
     }
   }
@@ -326,23 +357,40 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
     )
   }
 
-  function toggleMaintenance(spaceId: string, dKey: string) {
-    setOccupancy(o => {
-      const day = { ...(o[dKey] ?? {}) }
-      if (day[spaceId]?.maintenance) {
+  async function toggleMaintenance(spaceId: string, dKey: string) {
+    if (!tenant) return
+    const isCurrentlyMaint = !!(occupancy[dKey]?.[spaceId]?.maintenance)
+
+    if (isCurrentlyMaint) {
+      // Remove from DB
+      await sb.from('maintenance_slots')
+        .delete()
+        .eq('tenant_id', tenant.id)
+        .eq('space_id', spaceId)
+        .eq('date', dKey)
+      setOccupancy(o => {
+        const day = { ...(o[dKey] ?? {}) }
         delete day[spaceId]
-        showToast({ kind: 'info', title: 'Back in service', body: spaceId })
-      } else {
-        day[spaceId] = { maintenance: true }
-        showToast({ kind: 'info', title: 'Marked under maintenance', body: spaceId })
-      }
-      return { ...o, [dKey]: day }
-    })
+        return { ...o, [dKey]: day }
+      })
+      showToast({ kind: 'info', title: 'Back in service', body: spaceId })
+    } else {
+      // Insert to DB
+      await sb.from('maintenance_slots').upsert(
+        { tenant_id: tenant.id, space_id: spaceId, date: dKey },
+        { onConflict: 'tenant_id,space_id,date' }
+      )
+      setOccupancy(o => ({
+        ...o,
+        [dKey]: { ...(o[dKey] ?? {}), [spaceId]: { maintenance: true as const } },
+      }))
+      showToast({ kind: 'info', title: 'Marked under maintenance', body: spaceId })
+    }
   }
 
   const value: AppContextValue = {
     view, setView,
-    userRole, setUserRole,
+    userRole,
     spaces,
     occupancy, isOccupied, toggleMaintenance,
     myBookings, addBooking, cancelBooking, markPaid, confirmPayment,

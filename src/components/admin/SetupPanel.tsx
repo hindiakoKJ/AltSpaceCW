@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Space, SpaceType, MembershipPlan, AmenityItem } from '../../types/app'
 import type { StudioProfile } from '../../types/app'
-import type { DbStudioSettings } from '../../types/database'
+import type { DbStudioSettings, DbSpace } from '../../types/database'
 import { ALL_SPACES } from '../../lib/mockData'
 import {
   DEFAULT_PROFILE, DEFAULT_PLANS, DEFAULT_AMENITIES,
@@ -141,9 +141,23 @@ function StudioProfileSection() {
   const [saved,   setSaved]   = useState(false)
   const [saveErr, setSaveErr] = useState('')
 
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+  const MAX_FILE_BYTES = 5 * 1024 * 1024 // 5 MB
+
   async function uploadImage(file: File, field: 'logo' | 'hero'): Promise<string | null> {
     if (!tenant) return null
-    const ext  = file.name.split('.').pop() ?? 'jpg'
+    // Validate type (no SVG — it can contain JS)
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setSaveErr('Only JPEG, PNG, and WebP images are allowed.')
+      return null
+    }
+    // Validate size
+    if (file.size > MAX_FILE_BYTES) {
+      setSaveErr('File is too large. Maximum size is 5 MB.')
+      return null
+    }
+    const extMap: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
+    const ext  = extMap[file.type] ?? 'jpg'
     const path = `${tenant.id}/${field}.${ext}`
     const { error } = await sb.storage.from('tenant-assets').upload(path, file, { upsert: true, contentType: file.type })
     if (error) { setSaveErr(error.message); return null }
@@ -154,6 +168,7 @@ function StudioProfileSection() {
   async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    setSaveErr('')
     setLogoUploading(true)
     const url = await uploadImage(file, 'logo')
     if (url) {
@@ -162,11 +177,13 @@ function StudioProfileSection() {
       reloadStudioSettings()
     }
     setLogoUploading(false)
+    e.target.value = ''
   }
 
   async function handleHeroChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    setSaveErr('')
     setHeroUploading(true)
     const url = await uploadImage(file, 'hero')
     if (url) {
@@ -175,6 +192,7 @@ function StudioProfileSection() {
       reloadStudioSettings()
     }
     setHeroUploading(false)
+    e.target.value = ''
   }
 
   // Load from DB on mount
@@ -455,12 +473,33 @@ const EMPTY_FORM: SpaceForm = {
 }
 
 function SpaceInventorySection() {
-  // NOTE: In production this is loaded from Supabase `spaces` table.
-  // For now we clone the mock data into local state.
-  const [spaces, setSpaces] = useState<Space[]>([...ALL_SPACES])
+  const { tenant } = useTenant()
+  const [spaces,    setSpaces]    = useState<Space[]>([])
+  const [loading,   setLoading]   = useState(true)
+  const [saving,    setSaving]    = useState(false)
+  const [saveErr,   setSaveErr]   = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [form, setForm] = useState<SpaceForm>(EMPTY_FORM)
+  const [form,      setForm]      = useState<SpaceForm>(EMPTY_FORM)
+
+  // Load from DB
+  useEffect(() => {
+    if (!tenant) return
+    setLoading(true)
+    sb.from('spaces')
+      .select('*')
+      .eq('tenant_id', tenant.id)
+      .eq('is_active', true)
+      .order('sort_order')
+      .then(({ data }: { data: DbSpace[] | null }) => {
+        setSpaces(data ? data.map(d => ({
+          id: d.id, label: d.label, type: d.type as SpaceType,
+          zone: d.zone, price: Number(d.price), hourly: Number(d.hourly),
+          capacity: d.capacity ?? undefined,
+        })) : [...ALL_SPACES])
+        setLoading(false)
+      })
+  }, [tenant?.id])
 
   const counts = {
     hot:       spaces.filter(s => s.type === 'hot').length,
@@ -487,34 +526,45 @@ function SpaceInventorySection() {
     setShowModal(true)
   }
 
-  function handleDelete(id: string) {
-    setSpaces(ss => ss.filter(s => s.id !== id))
+  async function handleDelete(id: string) {
+    if (!tenant) return
+    setSaving(true)
+    setSaveErr('')
+    const { error } = await sb.from('spaces').update({ is_active: false }).eq('id', id).eq('tenant_id', tenant.id)
+    if (error) { setSaveErr(error.message) }
+    else { setSpaces(ss => ss.filter(s => s.id !== id)) }
+    setSaving(false)
   }
 
-  function handleSubmit() {
-    if (!form.label.trim() || !form.zone.trim()) return
+  async function handleSubmit() {
+    if (!form.label.trim() || !form.zone.trim() || !tenant) return
+    setSaving(true)
+    setSaveErr('')
+    const capacity = form.type === 'room' ? (Number(form.capacity) || null) : null
+    const spaceData = {
+      label:     form.label,
+      type:      form.type,
+      zone:      form.zone,
+      price:     Number(form.price) || 0,
+      hourly:    Number(form.hourly) || 0,
+      capacity,
+      is_active: true,
+      tenant_id: tenant.id,
+    }
+
     if (editingId) {
+      const { error } = await sb.from('spaces').update(spaceData).eq('id', editingId).eq('tenant_id', tenant.id)
+      if (error) { setSaveErr(error.message); setSaving(false); return }
       setSpaces(ss => ss.map(s => s.id !== editingId ? s : {
-        ...s,
-        label:    form.label,
-        type:     form.type,
-        zone:     form.zone,
-        price:    Number(form.price) || 0,
-        hourly:   Number(form.hourly) || 0,
-        capacity: form.type === 'room' ? (Number(form.capacity) || undefined) : undefined,
+        ...s, ...spaceData, capacity: capacity ?? undefined,
       }))
     } else {
       const newId = `${form.type.toUpperCase().slice(0, 2)}-${String(Date.now()).slice(-4)}`
-      setSpaces(ss => [...ss, {
-        id:       newId,
-        label:    form.label,
-        type:     form.type,
-        zone:     form.zone,
-        price:    Number(form.price) || 0,
-        hourly:   Number(form.hourly) || 0,
-        capacity: form.type === 'room' ? (Number(form.capacity) || undefined) : undefined,
-      }])
+      const { error } = await sb.from('spaces').insert({ id: newId, sort_order: spaces.length, ...spaceData })
+      if (error) { setSaveErr(error.message); setSaving(false); return }
+      setSpaces(ss => [...ss, { id: newId, ...spaceData, capacity: capacity ?? undefined }])
     }
+    setSaving(false)
     setShowModal(false)
   }
 
@@ -534,7 +584,7 @@ function SpaceInventorySection() {
         <div>
           <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Space Inventory</div>
           <h2 className="mt-1 text-[28px] leading-tight tracking-tight text-slate-900">
-            <span className="serif-italic">{spaces.length} spaces</span> configured
+            <span className="serif-italic">{loading ? '…' : spaces.length} spaces</span> configured
           </h2>
           <p className="mt-2 text-sm text-slate-500">
             Define what members can book — desks, rooms, pods, or any custom space type.
@@ -542,12 +592,16 @@ function SpaceInventorySection() {
         </div>
         <button
           onClick={openAdd}
-          className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 transition"
+          disabled={saving}
+          className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:bg-slate-400 transition"
         >
           <Icon name="Plus" size={15} />
           Add space
         </button>
       </div>
+      {saveErr && (
+        <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{saveErr}</div>
+      )}
 
       {/* Summary pills */}
       <div className="mb-5 flex flex-wrap gap-3">
@@ -709,10 +763,38 @@ const EMPTY_PLAN_FORM: PlanForm = {
 const COLOR_SWATCHES = ['stone','amber','emerald','slate','violet','rose']
 
 function MembershipPlansSection() {
-  const [plans, setPlans] = useState<MembershipPlan[]>(DEFAULT_PLANS)
+  const { tenant } = useTenant()
+  const [plans,     setPlans]     = useState<MembershipPlan[]>(DEFAULT_PLANS)
+  const [saving,    setSaving]    = useState(false)
+  const [saved,     setSaved]     = useState(false)
+  const [saveErr,   setSaveErr]   = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [form, setForm] = useState<PlanForm>(EMPTY_PLAN_FORM)
+  const [form,      setForm]      = useState<PlanForm>(EMPTY_PLAN_FORM)
+
+  // Load from DB
+  useEffect(() => {
+    if (!tenant) return
+    sb.from('studio_settings')
+      .select('plans')
+      .eq('tenant_id', tenant.id)
+      .maybeSingle()
+      .then(({ data }: { data: { plans: MembershipPlan[] } | null }) => {
+        if (data?.plans && Array.isArray(data.plans) && data.plans.length > 0) {
+          setPlans(data.plans as MembershipPlan[])
+        }
+      })
+  }, [tenant?.id])
+
+  async function savePlans(updated: MembershipPlan[]) {
+    if (!tenant) return
+    setSaving(true); setSaveErr('')
+    const { error } = await sb.from('studio_settings')
+      .upsert({ tenant_id: tenant.id, plans: updated }, { onConflict: 'tenant_id' })
+    setSaving(false)
+    if (error) { setSaveErr(error.message) }
+    else { setSaved(true); setTimeout(() => setSaved(false), 2000) }
+  }
 
   function openAdd() {
     setEditingId(null)
@@ -738,7 +820,9 @@ function MembershipPlansSection() {
   }
 
   function handleDelete(id: string) {
-    setPlans(ps => ps.filter(p => p.id !== id))
+    const updated = plans.filter(p => p.id !== id)
+    setPlans(updated)
+    savePlans(updated)
   }
 
   function handleSubmit() {
@@ -754,11 +838,14 @@ function MembershipPlansSection() {
       color:       form.color,
       popular:     form.popular,
     }
+    let updated: MembershipPlan[]
     if (editingId) {
-      setPlans(ps => ps.map(p => p.id === editingId ? { ...planData, id: editingId } : p))
+      updated = plans.map(p => p.id === editingId ? { ...planData, id: editingId } : p)
     } else {
-      setPlans(ps => [...ps, { ...planData, id: `plan-${Date.now()}` }])
+      updated = [...plans, { ...planData, id: `plan-${Date.now()}` }]
     }
+    setPlans(updated)
+    savePlans(updated)
     setShowModal(false)
   }
 
@@ -778,13 +865,19 @@ function MembershipPlansSection() {
             Define pricing tiers, day credits, and what each plan includes.
           </p>
         </div>
-        <button
-          onClick={openAdd}
-          className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 transition"
-        >
-          <Icon name="Plus" size={15} />
-          Add plan
-        </button>
+        <div className="flex items-center gap-2">
+          {saved && <span className="text-xs text-emerald-600 font-medium">Saved ✓</span>}
+          {saveErr && <span className="text-xs text-rose-600">{saveErr}</span>}
+          {saving && <span className="text-xs text-slate-400">Saving…</span>}
+          <button
+            onClick={openAdd}
+            disabled={saving}
+            className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:bg-slate-400 transition"
+          >
+            <Icon name="Plus" size={15} />
+            Add plan
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
@@ -982,9 +1075,26 @@ function MembershipPlansSection() {
 /* ── Amenities section ──────────────────────────────────────────────── */
 
 function AmenitiesSection() {
-  const [amenities, setAmenities] = useState<AmenityItem[]>(DEFAULT_AMENITIES)
+  const { tenant } = useTenant()
+  const [amenities,      setAmenities]      = useState<AmenityItem[]>(DEFAULT_AMENITIES)
   const [activeCategory, setActiveCategory] = useState<AmenityItem['category']>('tech')
-  const [saved, setSaved] = useState(false)
+  const [saving,         setSaving]         = useState(false)
+  const [saved,          setSaved]          = useState(false)
+  const [saveErr,        setSaveErr]        = useState('')
+
+  // Load from DB
+  useEffect(() => {
+    if (!tenant) return
+    sb.from('studio_settings')
+      .select('amenities')
+      .eq('tenant_id', tenant.id)
+      .maybeSingle()
+      .then(({ data }: { data: { amenities: AmenityItem[] } | null }) => {
+        if (data?.amenities && Array.isArray(data.amenities) && data.amenities.length > 0) {
+          setAmenities(data.amenities as AmenityItem[])
+        }
+      })
+  }, [tenant?.id])
 
   const enabledCount = amenities.filter(a => a.enabled).length
 
@@ -993,9 +1103,14 @@ function AmenitiesSection() {
     setSaved(false)
   }
 
-  function handleSave() {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+  async function handleSave() {
+    if (!tenant) return
+    setSaving(true); setSaveErr('')
+    const { error } = await sb.from('studio_settings')
+      .upsert({ tenant_id: tenant.id, amenities }, { onConflict: 'tenant_id' })
+    setSaving(false)
+    if (error) { setSaveErr(error.message) }
+    else { setSaved(true); setTimeout(() => setSaved(false), 2500) }
   }
 
   const filtered = amenities.filter(a => a.category === activeCategory)
@@ -1076,12 +1191,15 @@ function AmenitiesSection() {
         ))}
       </div>
 
+      {saveErr && (
+        <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{saveErr}</div>
+      )}
       {saved ? (
         <div className="mt-8 flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-800">
           <Icon name="CheckCircle2" size={16} /> Changes saved!
         </div>
       ) : (
-        <SaveBar onSave={handleSave} />
+        <SaveBar onSave={handleSave} saving={saving} />
       )}
     </div>
   )
@@ -1344,6 +1462,13 @@ function MembersSection() {
     setShowModal(true)
   }
 
+  function closeModal() {
+    // Clear password from state immediately on close — never linger in memory
+    setForm({ full_name: '', email: '', password: '' })
+    setCreated(null)
+    setShowModal(false)
+  }
+
   async function handleCreate() {
     if (!form.full_name.trim() || !form.email.trim() || !form.password.trim()) {
       setFormError('All fields are required.')
@@ -1487,7 +1612,7 @@ function MembersSection() {
       {/* Add member modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !saving && setShowModal(false)} />
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !saving && closeModal()} />
           <div className="relative w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-soft-lg">
 
             {/* Header */}
@@ -1497,7 +1622,7 @@ function MembersSection() {
                 <h3 className="mt-0.5 text-xl font-semibold text-slate-900">Add a member</h3>
               </div>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={closeModal}
                 disabled={saving}
                 className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-stone-100 disabled:opacity-50"
               >
@@ -1520,10 +1645,20 @@ function MembersSection() {
                   </div>
                   <div>
                     <div className="text-[11px] text-slate-400">Temporary password</div>
-                    <div className="font-mono text-sm font-medium text-slate-900">{created.password}</div>
+                    <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      <span className="font-mono text-sm tracking-widest text-slate-900">{'•'.repeat(created.password.length)}</span>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(created.password)}
+                        className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-stone-100 transition"
+                        title="Copy password to clipboard"
+                      >
+                        <Icon name="Copy" size={11} />
+                        Copy
+                      </button>
+                    </div>
                   </div>
                   <p className="text-[11px] text-slate-400">
-                    The client can change their password from their account settings after first login.
+                    Password is hidden for security. Click Copy to share it. The client can change it after first login.
                   </p>
                 </div>
                 <button
@@ -1567,7 +1702,7 @@ function MembersSection() {
 
                 <div className="flex gap-3 pt-1">
                   <button
-                    onClick={() => setShowModal(false)}
+                    onClick={closeModal}
                     disabled={saving}
                     className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300 disabled:opacity-50 transition"
                   >

@@ -133,7 +133,6 @@ export interface AppContextValue {
   view: ViewType
   setView: (v: ViewType) => void
   userRole: UserRole
-  setUserRole: (r: UserRole) => void
   spaces: Space[]
   occupancy: OccupancyMap
   isOccupied: (spaceId: string, dKey: string, start: number, end: number) => boolean

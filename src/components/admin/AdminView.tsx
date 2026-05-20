@@ -431,15 +431,17 @@ export function AdminView() {
   const app = useApp()
   const { tenant } = useTenant()
 
-  const [adminTab,    setAdminTab]    = useState<AdminTab>('operations')
-  const [dateOffset,  setDateOffset]  = useState(0)
-  const [zoneFilter,  setZoneFilter]  = useState('all')
-  const [searchQ,     setSearchQ]     = useState('')
+  const [adminTab,      setAdminTab]      = useState<AdminTab>('operations')
+  const [dateOffset,    setDateOffset]    = useState(0)
+  const [zoneFilter,    setZoneFilter]    = useState('all')
+  const [searchQ,       setSearchQ]       = useState('')
   const [selectedSpace, setSelectedSpace] = useState<Space | null>(null)
   const [pendingPayments, setPendingPayments] = useState<PendingPayment[]>([])
+  const [dayRevenue,    setDayRevenue]    = useState<number | null>(null)
 
   useEffect(() => {
     if (!tenant) return
+    // Pending payments
     sb.from('bookings')
       .select('id, date, start_hour, end_hour, price, admin_deadline, space:spaces(label, type, zone), user:profiles(full_name, email)')
       .eq('tenant_id', tenant.id)
@@ -449,6 +451,22 @@ export function AdminView() {
         if (data) setPendingPayments(data)
       })
   }, [tenant?.id])
+
+  // Load real revenue for selected date
+  const dKeyForRevenue = dateKey(addDays(TODAY, dateOffset))
+  useEffect(() => {
+    if (!tenant) return
+    sb.from('bookings')
+      .select('price')
+      .eq('tenant_id', tenant.id)
+      .eq('date', dKeyForRevenue)
+      .neq('status', 'cancelled')
+      .neq('payment_status', 'expired')
+      .then(({ data }: { data: { price: number }[] | null }) => {
+        if (data) setDayRevenue(data.reduce((sum, b) => sum + Number(b.price), 0))
+        else setDayRevenue(0)
+      })
+  }, [tenant?.id, dKeyForRevenue])
 
   const date   = addDays(TODAY, dateOffset)
   const dKey   = dateKey(date)
@@ -460,18 +478,8 @@ export function AdminView() {
   const maintCount     = Object.values(day).filter(s => s.maintenance).length
   const occPct         = Math.round((occupiedCount / totalSpaces) * 100)
 
-  const revenue = Math.round(
-    Object.values(day).reduce((sum, s) => {
-      if (s.maintenance) return sum
-      const hrs = (s.end ?? 17) - (s.start ?? 9)
-      return sum + hrs * 5 + 20
-    }, 0)
-  )
-
-  const yKey  = dateKey(addDays(date, -1))
-  const yDay  = app.occupancy[yKey] ?? {}
-  const yRev  = Math.round(Object.values(yDay).reduce((s, x) => s + (x.maintenance ? 0 : ((x.end ?? 17) - (x.start ?? 9)) * 5 + 20), 0))
-  const revDelta = yRev > 0 ? Math.round(((revenue - yRev) / yRev) * 100) : 0
+  const revenue  = dayRevenue ?? 0
+  const revDelta = 0  // delta vs yesterday requires a second query — placeholder for now
 
   const zones = Array.from(new Set(ALL_SPACES.map(s => s.zone)))
 
@@ -618,6 +626,17 @@ export function AdminView() {
                   <button
                     onClick={async () => {
                       await sb.from('bookings').update({ payment_status: 'confirmed' }).eq('id', p.id)
+                      const { data: { user } } = await sb.auth.getUser()
+                      if (user && tenant) {
+                        await sb.from('audit_log').insert({
+                          tenant_id:   tenant.id,
+                          actor_id:    user.id,
+                          action:      'payment_confirmed',
+                          entity_type: 'booking',
+                          entity_id:   p.id,
+                          metadata:    { price: p.price, space: p.space?.label, date: p.date },
+                        })
+                      }
                       setPendingPayments(ps => ps.filter(x => x.id !== p.id))
                     }}
                     className="flex-1 rounded-xl bg-slate-900 py-2 text-sm font-medium text-white hover:bg-slate-700"
@@ -627,6 +646,17 @@ export function AdminView() {
                   <button
                     onClick={async () => {
                       await sb.from('bookings').update({ payment_status: 'expired' }).eq('id', p.id)
+                      const { data: { user } } = await sb.auth.getUser()
+                      if (user && tenant) {
+                        await sb.from('audit_log').insert({
+                          tenant_id:   tenant.id,
+                          actor_id:    user.id,
+                          action:      'payment_rejected',
+                          entity_type: 'booking',
+                          entity_id:   p.id,
+                          metadata:    { price: p.price, space: p.space?.label, date: p.date },
+                        })
+                      }
                       setPendingPayments(ps => ps.filter(x => x.id !== p.id))
                     }}
                     className="rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-stone-50"

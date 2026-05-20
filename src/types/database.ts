@@ -1,4 +1,4 @@
-// Database types — mirrors supabase/schema.sql exactly
+// Database types — mirrors supabase schema
 
 export interface DbStudioSettings {
   id:                   string
@@ -15,6 +15,8 @@ export interface DbStudioSettings {
   hours:                Record<string, { open: boolean; from: string; to: string }>
   logo_url:             string | null
   hero_image_url:       string | null
+  plans:                unknown[]   // JSONB — MembershipPlan[]
+  amenities:            unknown[]   // JSONB — AmenityItem[]
   updated_at:           string
 }
 
@@ -35,40 +37,59 @@ export interface DbSubscription {
 export interface Profile {
   id:         string
   full_name:  string
-  email:      string | null
   role:       'client' | 'admin'
   plan:       string
   created_at: string
 }
 
 export interface DbSpace {
-  id:         string          // text PK, e.g. "HD-01"
+  id:         string
   label:      string
   type:       'hot' | 'dedicated' | 'room'
   zone:       string
-  price:      number          // day rate
-  hourly:     number          // hourly rate
+  price:      number
+  hourly:     number
   capacity:   number | null
   is_active:  boolean
   sort_order: number
+  tenant_id:  string
 }
 
 export interface DbBooking {
-  id:             string
-  user_id:        string
-  space_id:       string
-  date:           string          // YYYY-MM-DD
-  start_hour:     number
-  end_hour:       number
-  price:          number
-  status:         'upcoming' | 'cancelled'
-  payment_status: 'pending' | 'awaiting_confirmation' | 'confirmed' | 'expired'
+  id:              string
+  user_id:         string
+  space_id:        string
+  date:            string
+  start_hour:      number
+  end_hour:        number
+  price:           number
+  status:          'upcoming' | 'cancelled'
+  payment_status:  'pending' | 'awaiting_confirmation' | 'confirmed' | 'expired'
   client_deadline: string | null
   admin_deadline:  string | null
-  notes:          string | null
-  created_at:     string
-  // joined via select('*, space:spaces(*)')
-  space?: DbSpace
+  tenant_id:       string
+  notes:           string | null
+  created_at:      string
+  space?:          DbSpace
+}
+
+export interface DbMaintenanceSlot {
+  id:         string
+  tenant_id:  string
+  space_id:   string
+  date:       string   // YYYY-MM-DD
+  created_at: string
+}
+
+export interface DbAuditLog {
+  id:          string
+  tenant_id:   string | null
+  actor_id:    string | null
+  action:      string
+  entity_type: string
+  entity_id:   string | null
+  metadata:    Record<string, unknown> | null
+  created_at:  string
 }
 
 export interface Database {
@@ -99,19 +120,21 @@ export interface Database {
         Insert: Omit<DbStudioSettings, 'id'>
         Update: Partial<Omit<DbStudioSettings, 'id'>>
       }
+      maintenance_slots: {
+        Row:    DbMaintenanceSlot
+        Insert: Omit<DbMaintenanceSlot, 'id' | 'created_at'>
+        Update: Partial<Omit<DbMaintenanceSlot, 'id' | 'created_at'>>
+      }
+      audit_log: {
+        Row:    DbAuditLog
+        Insert: Omit<DbAuditLog, 'id' | 'created_at'>
+        Update: never
+      }
     }
     Views: Record<string, never>
     Functions: {
-      check_booking_conflict: {
-        Args: {
-          p_space_id:           string
-          p_date:               string
-          p_start_hour:         number
-          p_end_hour:           number
-          p_exclude_booking_id?: string
-        }
-        Returns: boolean
-      }
+      get_my_tenant_id: { Args: Record<string, never>; Returns: string }
+      get_my_role:      { Args: Record<string, never>; Returns: string }
     }
     Enums: Record<string, never>
   }

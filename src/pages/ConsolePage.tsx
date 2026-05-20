@@ -60,8 +60,8 @@ export default function ConsolePage() {
   async function loadAll() {
     setLoading(true)
     const [{ data: t }, { data: u }] = await Promise.all([
-      sb.from('tenants').select('*').order('created_at', { ascending: false }),
-      sb.from('profiles').select('*, tenant:tenants(name, slug)').order('created_at', { ascending: false }),
+      sb.from('tenants').select('*').order('created_at', { ascending: false }).range(0, 199),
+      sb.from('profiles').select('*, tenant:tenants(name, slug)').order('created_at', { ascending: false }).range(0, 499),
     ])
     setTenants((t as Tenant[]) ?? [])
     setUsers((u as TenantProfile[]) ?? [])

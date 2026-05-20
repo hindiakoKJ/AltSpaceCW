@@ -1,3 +1,4 @@
+import { Component } from 'react'
 import type { ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
@@ -10,6 +11,35 @@ import LandingPage from './pages/LandingPage'
 import PrivacyPage from './pages/PrivacyPage'
 import ContactPage from './pages/ContactPage'
 import type { ViewType } from './types/app'
+
+/* ── Error boundary ──────────────────────────────────────────────── */
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  constructor(props: { children: ReactNode }) {
+    super(props)
+    this.state = { error: null }
+  }
+  static getDerivedStateFromError(error: Error) { return { error } }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center bg-[#F6F4EF] p-8 text-center">
+          <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-8 shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
+            <div className="font-serif text-xl text-slate-900">Something went wrong</div>
+            <p className="mt-2 text-sm text-slate-500">An unexpected error occurred. Please refresh the page.</p>
+            <p className="mt-3 font-mono text-xs text-rose-500">{this.state.error.message}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-6 rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            >
+              Refresh page
+            </button>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 function LoadingScreen() {
   return (
@@ -78,9 +108,9 @@ function RequireTenant({ children }: { children: ReactNode }) {
   // Console admins can access any tenant
   if (profile?.role === 'console') return <>{children}</>
 
-  // If the user's tenant slug doesn't match the URL slug, block access
+  // If the user has no tenant or their slug doesn't match the URL slug, block access
   const userSlug = profile?.tenant?.slug
-  if (userSlug && slug && userSlug !== slug) {
+  if (!userSlug || userSlug !== slug) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F6F4EF] p-4">
         <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
@@ -131,6 +161,7 @@ function TenantApp({ initialView }: { initialView: ViewType }) {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <AuthProvider>
       <BrowserRouter>
         <Routes>
@@ -145,5 +176,6 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    </ErrorBoundary>
   )
 }

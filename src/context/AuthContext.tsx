@@ -58,12 +58,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => setLoading(false))
 
-    // Keep session in sync (token refresh, sign-out from another tab)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    // Keep session in sync (token refresh, sign-out from another tab, role changes)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
       if (!session) {
         setProfile(null)
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        // Reload profile so role/tenant changes are picked up without a hard refresh
+        const p = await loadProfile(session.user.id)
+        setProfile(p)
       }
     })
 
