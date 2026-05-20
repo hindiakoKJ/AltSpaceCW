@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Space, SpaceType, MembershipPlan, AmenityItem } from '../../types/app'
 import type { StudioProfile } from '../../types/app'
 import { ALL_SPACES } from '../../lib/mockData'
@@ -8,18 +8,25 @@ import {
 } from '../../lib/setupData'
 import { Icon } from '../ui/Icon'
 import { useApp } from '../../context/AppContext'
+import { useAuth } from '../../context/AuthContext'
+import { useTenant } from '../../context/TenantContext'
+import { supabase } from '../../lib/supabase'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sb = supabase as any
 
 const BUFFER_OPTIONS = [1, 2, 3, 4, 6, 8, 12, 24]
 
 /* ── helpers ────────────────────────────────────────────────────────── */
 
-type SetupSection = 'profile' | 'spaces' | 'plans' | 'amenities'
+type SetupSection = 'profile' | 'spaces' | 'plans' | 'amenities' | 'members'
 
 const SECTIONS: { id: SetupSection; label: string; icon: string; desc: string }[] = [
   { id: 'profile',   label: 'Studio Profile',   icon: 'Building2',   desc: 'Name, hours & contact' },
   { id: 'spaces',    label: 'Space Inventory',  icon: 'LayoutGrid',  desc: 'Add, edit & remove spaces' },
   { id: 'plans',     label: 'Membership Plans', icon: 'CreditCard',  desc: 'Pricing & tier rules' },
   { id: 'amenities', label: 'Amenities',        icon: 'Sparkles',    desc: 'What your space offers' },
+  { id: 'members',   label: 'Members',          icon: 'Users',       desc: 'Create & manage client accounts' },
 ]
 
 const DAYS_OF_WEEK = [
@@ -950,6 +957,267 @@ function AmenitiesSection() {
   )
 }
 
+/* ── Members section ─────────────────────────────────────────────────── */
+
+type MemberRow = { id: string; full_name: string | null; email: string; created_at: string }
+
+function MembersSection() {
+  const { user } = useAuth()
+  const { tenant } = useTenant()
+
+  const [members, setMembers]     = useState<MemberRow[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const [created, setCreated]     = useState<{ email: string; password: string } | null>(null)
+
+  const [form, setForm]       = useState({ full_name: '', email: '', password: '' })
+  const [saving, setSaving]   = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+
+  // Load existing members for this tenant
+  useEffect(() => {
+    if (!tenant) return
+    setLoading(true)
+    sb.from('profiles')
+      .select('id, full_name, email, created_at')
+      .eq('tenant_id', tenant.id)
+      .eq('role', 'client')
+      .order('created_at', { ascending: false })
+      .then(({ data }: { data: MemberRow[] | null }) => {
+        setMembers(data ?? [])
+        setLoading(false)
+      })
+  }, [tenant])
+
+  function openModal() {
+    setForm({ full_name: '', email: '', password: '' })
+    setFormError(null)
+    setCreated(null)
+    setShowModal(true)
+  }
+
+  async function handleCreate() {
+    if (!form.full_name.trim() || !form.email.trim() || !form.password.trim()) {
+      setFormError('All fields are required.')
+      return
+    }
+    if (form.password.length < 6) {
+      setFormError('Password must be at least 6 characters.')
+      return
+    }
+
+    setSaving(true)
+    setFormError(null)
+
+    try {
+      const { data: sessionData } = await sb.auth.getSession()
+      const token = sessionData?.session?.access_token
+      if (!token) throw new Error('Not authenticated')
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            email:     form.email.trim().toLowerCase(),
+            password:  form.password,
+            full_name: form.full_name.trim(),
+            // role and tenant_id are enforced server-side for admin callers
+          }),
+        }
+      )
+
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error ?? 'Failed to create account')
+
+      // Show credentials to hand to the client
+      setCreated({ email: form.email.trim().toLowerCase(), password: form.password })
+
+      // Refresh member list
+      const newRow: MemberRow = {
+        id:         result.id,
+        full_name:  form.full_name.trim(),
+        email:      form.email.trim().toLowerCase(),
+        created_at: new Date().toISOString(),
+      }
+      setMembers(cur => [newRow, ...cur])
+
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Something went wrong.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div>
+      <div className="mb-8 flex items-end justify-between gap-4">
+        <div>
+          <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Members</div>
+          <h2 className="mt-1 text-[28px] leading-tight tracking-tight text-slate-900">
+            <span className="serif-italic">{members.length} client{members.length !== 1 ? 's' : ''}</span> registered
+          </h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Create client accounts directly. Share the credentials — they can change their password anytime.
+          </p>
+        </div>
+        <button
+          onClick={openModal}
+          className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 transition"
+        >
+          <Icon name="UserPlus" size={15} />
+          Add member
+        </button>
+      </div>
+
+      {/* Member list */}
+      {loading ? (
+        <div className="flex items-center gap-2 text-sm text-slate-400">
+          <Icon name="Loader" size={14} className="animate-spin" /> Loading members…
+        </div>
+      ) : members.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-slate-200 py-16 text-slate-400">
+          <Icon name="Users" size={28} />
+          <p className="text-sm">No members yet. Add your first client above.</p>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <table className="w-full text-sm">
+            <thead className="border-b border-slate-100 bg-stone-50">
+              <tr>
+                <th className="px-5 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-slate-400">Name</th>
+                <th className="px-5 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-slate-400">Email</th>
+                <th className="px-5 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-slate-400">Joined</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {members.map(m => (
+                <tr key={m.id} className="hover:bg-stone-50 transition">
+                  <td className="px-5 py-3 font-medium text-slate-900">
+                    {m.full_name ?? <span className="text-slate-400 italic">—</span>}
+                  </td>
+                  <td className="px-5 py-3 text-slate-600">{m.email}</td>
+                  <td className="px-5 py-3 text-slate-400">
+                    {new Date(m.created_at).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Add member modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !saving && setShowModal(false)} />
+          <div className="relative w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-soft-lg">
+
+            {/* Header */}
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">New client account</div>
+                <h3 className="mt-0.5 text-xl font-semibold text-slate-900">Add a member</h3>
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                disabled={saving}
+                className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-stone-100 disabled:opacity-50"
+              >
+                <Icon name="X" size={16} />
+              </button>
+            </div>
+
+            {/* Success state — show credentials */}
+            {created ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                  <Icon name="CheckCircle2" size={16} />
+                  Account created successfully.
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-stone-50 p-4 space-y-3">
+                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Share these credentials with the client</p>
+                  <div>
+                    <div className="text-[11px] text-slate-400">Email</div>
+                    <div className="font-mono text-sm font-medium text-slate-900">{created.email}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-slate-400">Temporary password</div>
+                    <div className="font-mono text-sm font-medium text-slate-900">{created.password}</div>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    The client can change their password from their account settings after first login.
+                  </p>
+                </div>
+                <button
+                  onClick={openModal}
+                  className="w-full rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300 transition"
+                >
+                  Add another member
+                </button>
+              </div>
+            ) : (
+              /* Form state */
+              <div className="space-y-4">
+                <FormField label="Full name">
+                  <TextInput
+                    value={form.full_name}
+                    onChange={v => setForm(f => ({ ...f, full_name: v }))}
+                    placeholder="Juan dela Cruz"
+                  />
+                </FormField>
+                <FormField label="Email address">
+                  <TextInput
+                    value={form.email}
+                    onChange={v => setForm(f => ({ ...f, email: v }))}
+                    placeholder="juan@example.com"
+                  />
+                </FormField>
+                <FormField label="Temporary password" hint="Client can change this after logging in.">
+                  <TextInput
+                    value={form.password}
+                    onChange={v => setForm(f => ({ ...f, password: v }))}
+                    placeholder="Min. 6 characters"
+                  />
+                </FormField>
+
+                {formError && (
+                  <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">
+                    <Icon name="AlertCircle" size={14} />
+                    {formError}
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-1">
+                  <button
+                    onClick={() => setShowModal(false)}
+                    disabled={saving}
+                    className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300 disabled:opacity-50 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreate}
+                    disabled={saving || !form.full_name.trim() || !form.email.trim() || !form.password.trim()}
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-slate-900 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:bg-slate-300 transition"
+                  >
+                    {saving && <Icon name="Loader" size={14} className="animate-spin" />}
+                    {saving ? 'Creating…' : 'Create account'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ── SetupPanel root ─────────────────────────────────────────────────── */
 
 export function SetupPanel() {
@@ -992,6 +1260,7 @@ export function SetupPanel() {
         {section === 'spaces'    && <SpaceInventorySection />}
         {section === 'plans'     && <MembershipPlansSection />}
         {section === 'amenities' && <AmenitiesSection />}
+        {section === 'members'   && <MembersSection />}
       </main>
     </div>
   )
