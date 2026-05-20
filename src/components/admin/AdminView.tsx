@@ -353,16 +353,10 @@ function ActivityFeed({ day }: { day: Record<string, { memberIdx?: number; start
 
 /* ── Maintenance queue ────────────────────────────────────────────── */
 
-const STATIC_TICKETS = [
-  { id: 'T-104', label: 'Espresso machine descale',   zone: 'Pantry',              due: 'Today' },
-  { id: 'T-103', label: 'HVAC zone north — filter',   zone: 'Open Floor — North',  due: 'Tomorrow' },
-  { id: 'T-101', label: 'Atlas display HDMI port',    zone: 'Boardrooms',           due: 'May 22' },
-]
-
 function MaintenanceQueue({
   day, dKey,
 }: { day: Record<string, { maintenance?: true }>; dKey: string }) {
-  const app             = useApp()
+  const app              = useApp()
   const maintenanceItems = Object.entries(day).filter(([, s]) => s.maintenance)
 
   return (
@@ -370,46 +364,52 @@ function MaintenanceQueue({
       <div className="mb-4 flex items-center justify-between">
         <div>
           <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Maintenance</div>
-          <h3 className="mt-1 text-xl font-semibold text-slate-900">{maintenanceItems.length + STATIC_TICKETS.length} open</h3>
+          <h3 className="mt-1 text-xl font-semibold text-slate-900">
+            {maintenanceItems.length === 0 ? 'All clear' : `${maintenanceItems.length} out of service`}
+          </h3>
         </div>
-        <button className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-300">
-          New ticket
-        </button>
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${
+          maintenanceItems.length === 0
+            ? 'bg-emerald-50 text-emerald-700'
+            : 'bg-amber-50 text-amber-700'
+        }`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${maintenanceItems.length === 0 ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+          {maintenanceItems.length === 0 ? 'No issues' : 'Needs attention'}
+        </span>
       </div>
-      <ul className="space-y-3">
-        {maintenanceItems.map(([id]) => {
-          const space = ALL_SPACES.find(s => s.id === id)
-          return space && (
-            <li key={id} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-stone-50 p-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-amber-300">
-                <Icon name="Wrench" size={14} />
-              </div>
-              <div className="flex-1">
-                <div className="text-sm font-medium text-slate-900">{space.label} out of service</div>
-                <div className="text-xs text-slate-500">{space.zone}</div>
-              </div>
-              <button
-                onClick={() => app.toggleMaintenance(id, dKey)}
-                className="rounded-full bg-emerald-500 px-3 py-1 text-[11px] font-medium text-white hover:bg-emerald-600"
-              >
-                Mark ready
-              </button>
-            </li>
-          )
-        })}
-        {STATIC_TICKETS.map(t => (
-          <li key={t.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 p-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
-              <Icon name="AlertTriangle" size={14} />
-            </div>
-            <div className="flex-1">
-              <div className="text-sm font-medium text-slate-900">{t.label}</div>
-              <div className="text-xs text-slate-500">{t.zone} · due {t.due}</div>
-            </div>
-            <div className="font-mono text-[10px] text-slate-400">{t.id}</div>
-          </li>
-        ))}
-      </ul>
+
+      {maintenanceItems.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 py-8 text-center">
+          <Icon name="CheckCircle" size={28} className="text-emerald-400" />
+          <p className="mt-2 text-sm font-medium text-slate-700">All spaces operational</p>
+          <p className="mt-0.5 text-xs text-slate-400">
+            Mark a space as maintenance from the floor map below.
+          </p>
+        </div>
+      ) : (
+        <ul className="space-y-3">
+          {maintenanceItems.map(([id]) => {
+            const space = ALL_SPACES.find(s => s.id === id)
+            return space && (
+              <li key={id} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-stone-50 p-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-amber-300">
+                  <Icon name="Wrench" size={14} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="truncate text-sm font-medium text-slate-900">{space.label} out of service</div>
+                  <div className="text-xs text-slate-500">{space.zone}</div>
+                </div>
+                <button
+                  onClick={() => app.toggleMaintenance(id, dKey)}
+                  className="shrink-0 rounded-full bg-emerald-500 px-3 py-1 text-[11px] font-medium text-white hover:bg-emerald-600"
+                >
+                  Mark ready
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </div>
   )
 }
