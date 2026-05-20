@@ -641,8 +641,8 @@ function SpaceInventorySection() {
                         {TYPE_LABELS[s.type]}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right font-medium text-slate-900">${s.price}</td>
-                    <td className="px-4 py-3 text-right text-slate-600">${s.hourly}/hr</td>
+                    <td className="px-4 py-3 text-right font-medium text-slate-900">₱{s.price}</td>
+                    <td className="px-4 py-3 text-right text-slate-600">₱{s.hourly}/hr</td>
                     <td className="px-4 py-3 text-right text-slate-500">{s.capacity ?? '—'}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition">
