@@ -5,8 +5,8 @@ import type { StudioProfile, MembershipPlan, AmenityItem } from '../types/app'
 export const DEFAULT_PROFILE: StudioProfile = {
   name:     'AltSpaceCW',
   tagline:  'Where great work happens',
-  address:  'Unit 15F, One World Place, 32nd Street',
-  city:     'Bonifacio Global City, Taguig 1634',
+  address:  'Enter your studio street address',
+  city:     'Naga, Camarines Sur 4400',
   timezone: 'Asia/Manila',
   phone:    '+63 2 8553 0001',
   email:    'hello@altspacecw.hnscorpph.com',

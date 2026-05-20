@@ -36,11 +36,12 @@ export function TopNav() {
     return (email ?? '??').slice(0, 2).toUpperCase()
   })()
   const meForAvatar = { name: displayName, avatar: avatarText, color: 'bg-amber-100 text-amber-900', plan: '' }
-  const [showProfile, setShowProfile] = useState(false)
+  const [showProfile,  setShowProfile]  = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
 
   return (
     <div className="sticky top-0 z-30 border-b border-slate-200/70 bg-[#F6F4EF]/85 backdrop-blur-md">
-      <div className="mx-auto flex max-w-[1400px] items-center gap-6 px-8 py-4">
+      <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:gap-6 sm:px-6 sm:py-4 lg:px-8">
 
         {/* Brand */}
         <button onClick={() => app.setView('book')} className="flex items-center gap-2.5">
@@ -50,7 +51,7 @@ export function TopNav() {
               <span className="font-serif text-[22px] tracking-tight text-slate-900">AltSpace</span>
               <span className="rounded-md bg-amber-500 px-1.5 py-0.5 font-mono text-[11px] font-bold text-slate-900 leading-none">CW</span>
             </div>
-            <div className="-mt-0.5 text-[10px] italic text-slate-500">a place to do the work.</div>
+            <div className="-mt-0.5 hidden text-[10px] italic text-slate-500 sm:block">a place to do the work.</div>
           </div>
         </button>
 
@@ -92,38 +93,47 @@ export function TopNav() {
             <Icon name="Bell" size={16} />
           </button>
 
-          <div className="relative group">
-            <button className="flex items-center gap-2 rounded-full border border-slate-200 bg-white pl-1 pr-3 py-1 hover:border-slate-300">
+          <div className="relative">
+            <button
+              onClick={() => setShowDropdown(v => !v)}
+              className="flex items-center gap-2 rounded-full border border-slate-200 bg-white pl-1 pr-3 py-1 hover:border-slate-300"
+            >
               <Avatar member={meForAvatar} size={28} />
               <span className="hidden text-sm font-medium text-slate-900 sm:block">{displayName}</span>
               <Icon name="ChevronDown" size={14} className="text-slate-400" />
             </button>
-            <div className="absolute right-0 top-full mt-1.5 hidden w-48 rounded-2xl border border-slate-200 bg-white py-1.5 shadow-lg group-focus-within:block group-hover:block">
-              <button
-                onClick={() => setShowProfile(true)}
-                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-stone-50"
-              >
-                <Icon name="User" size={14} />
-                My profile
-              </button>
-              {profile?.role === 'console' && (
-                <button
-                  onClick={() => navigate('/console')}
-                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-stone-50"
-                >
-                  <Icon name="Terminal" size={14} />
-                  Console
-                </button>
-              )}
-              <div className="my-1 border-t border-slate-100" />
-              <button
-                onClick={() => signOut()}
-                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50"
-              >
-                <Icon name="LogOut" size={14} />
-                Sign out
-              </button>
-            </div>
+            {showDropdown && (
+              <>
+                {/* backdrop — closes dropdown on outside tap */}
+                <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)} />
+                <div className="absolute right-0 top-full z-50 mt-1.5 w-48 rounded-2xl border border-slate-200 bg-white py-1.5 shadow-lg">
+                  <button
+                    onClick={() => { setShowProfile(true); setShowDropdown(false) }}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-stone-50"
+                  >
+                    <Icon name="User" size={14} />
+                    My profile
+                  </button>
+                  {profile?.role === 'console' && (
+                    <button
+                      onClick={() => { navigate('/console'); setShowDropdown(false) }}
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-stone-50"
+                    >
+                      <Icon name="Terminal" size={14} />
+                      Console
+                    </button>
+                  )}
+                  <div className="my-1 border-t border-slate-100" />
+                  <button
+                    onClick={() => { signOut(); setShowDropdown(false) }}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50"
+                  >
+                    <Icon name="LogOut" size={14} />
+                    Sign out
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

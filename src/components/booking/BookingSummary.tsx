@@ -56,7 +56,7 @@ export function BookingSummary({ date, range, space, total, hours, onConfirm, on
   }
 
   return (
-    <div className="sticky top-[88px]">
+    <div className="xl:sticky xl:top-[88px]">
       <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft-lg">
 
         {/* Header */}
@@ -105,7 +105,7 @@ export function BookingSummary({ date, range, space, total, hours, onConfirm, on
               </div>
             )}
           </div>
-          <div className="mt-1 text-xs text-slate-500">Charged to •••• 4242 after confirm.</div>
+          <div className="mt-1 text-xs text-slate-500">Payment collected by operator · cash or transfer.</div>
         </div>
 
         {/* Actions */}

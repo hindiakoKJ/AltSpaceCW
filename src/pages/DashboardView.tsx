@@ -97,7 +97,7 @@ function UpcomingCard({
     <div className="group relative flex overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft transition hover:shadow-soft-lg">
       <div className={`w-2 bg-gradient-to-b ${sidebar}`} />
       <div className="flex-1 p-6">
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${accentBg}`}>
               <Icon name={meta.icon} size={12} />
@@ -115,7 +115,7 @@ function UpcomingCard({
           </div>
         </div>
 
-        <div className="mt-5 flex items-center gap-3">
+        <div className="mt-5 flex flex-wrap items-center gap-2">
           <DetailChip icon="Clock"    label={`${booking.end - booking.start} hours`} />
           <DetailChip icon="Banknote" label={`₱${booking.price.toLocaleString()}`} />
           <DetailChip icon="QrCode"   label={`Check-in ${booking.space.id}`} />
@@ -174,9 +174,9 @@ function UpcomingCard({
           </div>
         )}
 
-        <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
           <Avatar member={meForAvatar} size={28} ring />
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-300 hover:bg-stone-50">
               <Icon name="Calendar" size={12} className="mr-1 inline-block" />
               Add to calendar
@@ -239,13 +239,13 @@ export function DashboardView() {
   }
 
   return (
-    <div className="mx-auto max-w-[1320px] px-8 pb-24 pt-10">
+    <div className="mx-auto max-w-[1320px] px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pt-10">
 
       {/* Hero */}
       <header className="fade-up">
         <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Your portal</div>
         <div className="mt-2 flex items-end justify-between gap-8">
-          <h1 className="text-[56px] leading-[1.05] tracking-tight text-slate-900">
+          <h1 className="text-[28px] leading-[1.1] tracking-tight text-slate-900 sm:text-[42px] lg:text-[56px] lg:leading-[1.05]">
             Welcome back, <span className="serif-italic text-amber-700">{firstName}.</span>
             <br />
             You have <span className="serif-italic">{upcoming.length} bookings</span> on the horizon.
@@ -366,7 +366,8 @@ export function DashboardView() {
       {/* Past history */}
       <Section2 eyebrow="Past history" title={<>Where you&rsquo;ve <span className="serif-italic">been</span>.</>}>
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft">
-          <table className="w-full text-left">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-left">
             <thead>
               <tr className="border-b border-slate-100 bg-stone-50/60 text-[11px] uppercase tracking-wider text-slate-500">
                 <th className="px-6 py-3 font-medium">Date</th>
@@ -415,6 +416,7 @@ export function DashboardView() {
               })}
             </tbody>
           </table>
+          </div>
           <div className="flex items-center justify-between border-t border-slate-100 bg-stone-50/60 px-6 py-3 text-xs text-slate-500">
             <span>Showing {past.length} of {past.length} visits</span>
             <button className="text-slate-700 hover:underline">Export all (CSV)</button>

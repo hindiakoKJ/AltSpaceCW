@@ -60,7 +60,7 @@ export function ConfirmModal({ date, range, space, total, hours, onClose, onConf
           <SummaryLine icon="Calendar"   label="Date"    value={fmtLongDate(date)} />
           <SummaryLine icon="Clock"      label="Time"    value={`${fmtRange(range.start, range.end)} · ${hours}h`} />
           <SummaryLine icon="MapPin"     label="Space"   value={`${space.label} · ${space.zone}`} />
-          <SummaryLine icon="CreditCard" label="Payment" value="Visa ending 4242" />
+          <SummaryLine icon="CreditCard" label="Payment" value="Operator collects · cash or transfer" />
 
           <div className="mt-4 flex items-end justify-between border-t border-slate-100 pt-4">
             <div>

@@ -151,23 +151,23 @@ export function BookingView() {
   }
 
   return (
-    <div className="mx-auto max-w-[1320px] px-8 pb-24 pt-10">
+    <div className="mx-auto max-w-[1320px] px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pt-10">
 
       {/* ── Hero ──────────────────────────────────────────────── */}
       <header className="fade-up">
-        <div className="flex items-end justify-between gap-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
           <div>
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-slate-500">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 pulse-dot" />
               AltSpaceCW open · 8:00 AM – 10:00 PM
             </div>
-            <h1 className="mt-3 text-[64px] leading-[1.05] tracking-tight text-slate-900">
+            <h1 className="mt-3 text-[32px] leading-[1.1] tracking-tight text-slate-900 sm:text-[48px] sm:leading-[1.05] lg:text-[64px]">
               Good morning, <span className="serif-italic text-amber-700">{firstName}.</span>
               <br />
               Let&rsquo;s find you <span className="serif-italic text-slate-700">a good seat.</span>
             </h1>
             <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-600">
-              The BGC floor is open and the Atlas boardroom is free after 2 PM.
+              The floor is open and the Atlas boardroom is free after 2 PM.
               Book a hot desk, dedicated seat, or the whole afternoon.
             </p>
           </div>
