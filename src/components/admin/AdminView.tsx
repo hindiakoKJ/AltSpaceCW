@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Space } from '../../types/app'
 import { useApp } from '../../context/AppContext'
 import { useTenant } from '../../context/TenantContext'
-import { ALL_SPACES, MEMBERS, TYPE_META } from '../../lib/mockData'
+import { MEMBERS, TYPE_META } from '../../lib/mockData'
 import { TODAY, addDays, dateKey, fmtLongDate, fmtHourShort, parseKey } from '../../lib/dateHelpers'
 import { Icon } from '../ui/Icon'
 import { Avatar } from '../ui/Avatar'
@@ -123,8 +123,8 @@ function ActiveUsersCard({ users, count }: { users: (typeof MEMBERS[number] | un
 
 /* ── Breakdown bar ────────────────────────────────────────────────── */
 
-function BreakdownCard({ type, day }: { type: string; day: Record<string, { maintenance?: true }> }) {
-  const list  = ALL_SPACES.filter(s => s.type === type)
+function BreakdownCard({ type, day, spaces }: { type: string; day: Record<string, { maintenance?: true }>; spaces: Space[] }) {
+  const list  = spaces.filter(s => s.type === type)
   const used  = list.filter(s => day[s.id] && !day[s.id].maintenance).length
   const total = list.length
   const pct   = (used / total) * 100
@@ -308,14 +308,14 @@ function InventoryTile({
 
 const WHEN_LABELS = ['2m ago','8m ago','14m ago','27m ago','41m ago','1h ago','1h ago','2h ago']
 
-function ActivityFeed({ day }: { day: Record<string, { memberIdx?: number; start?: number; end?: number; maintenance?: true }> }) {
+function ActivityFeed({ day, spaces }: { day: Record<string, { memberIdx?: number; start?: number; end?: number; maintenance?: true }>; spaces: Space[] }) {
   const entries = Object.entries(day)
     .filter(([, s]) => !s.maintenance)
     .slice(0, 8)
     .map(([spaceId, s], i) => ({
       id: spaceId,
       member: s.memberIdx !== undefined ? MEMBERS[s.memberIdx] : undefined,
-      space:  ALL_SPACES.find(x => x.id === spaceId),
+      space:  spaces.find(x => x.id === spaceId),
       when:   WHEN_LABELS[i] ?? '2h ago',
       action: i % 3 === 0 ? 'checked in to' : i % 3 === 1 ? 'booked' : 'swapped seat to',
     }))
@@ -354,8 +354,8 @@ function ActivityFeed({ day }: { day: Record<string, { memberIdx?: number; start
 /* ── Maintenance queue ────────────────────────────────────────────── */
 
 function MaintenanceQueue({
-  day, dKey,
-}: { day: Record<string, { maintenance?: true }>; dKey: string }) {
+  day, dKey, spaces,
+}: { day: Record<string, { maintenance?: true }>; dKey: string; spaces: Space[] }) {
   const app              = useApp()
   const maintenanceItems = Object.entries(day).filter(([, s]) => s.maintenance)
 
@@ -389,15 +389,14 @@ function MaintenanceQueue({
       ) : (
         <ul className="space-y-3">
           {maintenanceItems.map(([id]) => {
-            const space = ALL_SPACES.find(s => s.id === id)
-            return space && (
+            return (
               <li key={id} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-stone-50 p-3">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-amber-300">
                   <Icon name="Wrench" size={14} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="truncate text-sm font-medium text-slate-900">{space.label} out of service</div>
-                  <div className="text-xs text-slate-500">{space.zone}</div>
+                  <div className="truncate text-sm font-medium text-slate-900">{spaces.find(s => s.id === id)?.label ?? id} out of service</div>
+                  <div className="text-xs text-slate-500">{spaces.find(s => s.id === id)?.zone ?? '—'}</div>
                 </div>
                 <button
                   onClick={() => app.toggleMaintenance(id, dKey)}
@@ -471,26 +470,24 @@ export function AdminView() {
   const date   = addDays(TODAY, dateOffset)
   const dKey   = dateKey(date)
   const day    = app.occupancy[dKey] ?? {}
+  const spaces = app.spaces
 
   // Metrics
-  const totalSpaces    = ALL_SPACES.length
+  const totalSpaces    = spaces.length
   const occupiedCount  = Object.values(day).filter(s => !s.maintenance).length
   const maintCount     = Object.values(day).filter(s => s.maintenance).length
-  const occPct         = Math.round((occupiedCount / totalSpaces) * 100)
+  const occPct         = totalSpaces > 0 ? Math.round((occupiedCount / totalSpaces) * 100) : 0
 
   const revenue  = dayRevenue ?? 0
   const revDelta = 0  // delta vs yesterday requires a second query — placeholder for now
 
-  const zones = Array.from(new Set(ALL_SPACES.map(s => s.zone)))
+  const zones = Array.from(new Set(spaces.map(s => s.zone)))
 
-  const filteredSpaces = ALL_SPACES.filter(s => {
+  const filteredSpaces = spaces.filter(s => {
     if (zoneFilter !== 'all' && s.zone !== zoneFilter) return false
     if (searchQ) {
       const q = searchQ.toLowerCase()
-      const slotMember = day[s.id] && !day[s.id].maintenance && day[s.id].memberIdx !== undefined
-        ? (MEMBERS[day[s.id].memberIdx!]?.name ?? '').toLowerCase()
-        : ''
-      return s.label.toLowerCase().includes(q) || s.id.toLowerCase().includes(q) || slotMember.includes(q)
+      return s.label.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)
     }
     return true
   })
@@ -590,9 +587,9 @@ export function AdminView() {
 
       {/* Breakdown by type */}
       <section className="mt-4 grid grid-cols-12 gap-4">
-        <BreakdownCard type="hot"       day={day} />
-        <BreakdownCard type="dedicated" day={day} />
-        <BreakdownCard type="room"      day={day} />
+        <BreakdownCard type="hot"       day={day} spaces={spaces} />
+        <BreakdownCard type="dedicated" day={day} spaces={spaces} />
+        <BreakdownCard type="room"      day={day} spaces={spaces} />
       </section>
 
       {/* Pending payments */}
@@ -734,8 +731,8 @@ export function AdminView() {
 
       {/* Activity + maintenance */}
       <section className="mt-8 grid grid-cols-12 gap-4">
-        <ActivityFeed     day={day} />
-        <MaintenanceQueue day={day} dKey={dKey} />
+        <ActivityFeed     day={day} spaces={spaces} />
+        <MaintenanceQueue day={day} dKey={dKey} spaces={spaces} />
       </section>
 
       </>}
