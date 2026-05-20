@@ -42,7 +42,9 @@ const HOURS = Array.from({ length: 12 }, (_, i) => 8 + i) // 8..19
 export function BookingView() {
   const app = useApp()
   const { profile } = useAuth()
-  const firstName = profile?.full_name?.split(' ')[0] || profile?.email?.split('@')[0] || 'there'
+  const firstName  = profile?.full_name?.split(' ')[0] || profile?.email?.split('@')[0] || 'there'
+  const studioName = app.studioSettings?.name ?? 'AltSpaceCW'
+  const heroImg    = app.studioSettings?.heroImageUrl ?? null
 
   const [selectedDate, setSelectedDate] = useState<Date>(TODAY)
   const [filter,       setFilter]       = useState<FilterType>('all')
@@ -155,11 +157,16 @@ export function BookingView() {
 
       {/* ── Hero ──────────────────────────────────────────────── */}
       <header className="fade-up">
+        {heroImg && (
+          <div className="mb-6 h-40 w-full overflow-hidden rounded-3xl sm:h-52 lg:h-64">
+            <img src={heroImg} alt={studioName} className="h-full w-full object-cover" />
+          </div>
+        )}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
           <div>
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-slate-500">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 pulse-dot" />
-              AltSpaceCW open · 8:00 AM – 10:00 PM
+              {studioName} open · 8:00 AM – 10:00 PM
             </div>
             <h1 className="mt-3 text-[32px] leading-[1.1] tracking-tight text-slate-900 sm:text-[48px] sm:leading-[1.05] lg:text-[64px]">
               Good morning, <span className="serif-italic text-amber-700">{firstName}.</span>

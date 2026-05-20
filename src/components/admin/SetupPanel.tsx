@@ -130,12 +130,52 @@ function SaveBar({ onSave, saving = false, saved = false, error = '' }: {
 /* ── Studio Profile section ─────────────────────────────────────────── */
 
 function StudioProfileSection() {
-  const { bookingBufferHours, setBookingBufferHours } = useApp()
+  const { bookingBufferHours, setBookingBufferHours, reloadStudioSettings } = useApp()
   const { tenant } = useTenant()
-  const [profile, setProfile] = useState<StudioProfile>({ ...DEFAULT_PROFILE, booking_buffer_hours: bookingBufferHours })
-  const [saving, setSaving] = useState(false)
-  const [saved,  setSaved]  = useState(false)
+  const [profile,   setProfile]  = useState<StudioProfile>({ ...DEFAULT_PROFILE, booking_buffer_hours: bookingBufferHours })
+  const [logoUrl,   setLogoUrl]  = useState<string | null>(null)
+  const [heroUrl,   setHeroUrl]  = useState<string | null>(null)
+  const [logoUploading,  setLogoUploading]  = useState(false)
+  const [heroUploading,  setHeroUploading]  = useState(false)
+  const [saving,  setSaving]  = useState(false)
+  const [saved,   setSaved]   = useState(false)
   const [saveErr, setSaveErr] = useState('')
+
+  async function uploadImage(file: File, field: 'logo' | 'hero'): Promise<string | null> {
+    if (!tenant) return null
+    const ext  = file.name.split('.').pop() ?? 'jpg'
+    const path = `${tenant.id}/${field}.${ext}`
+    const { error } = await sb.storage.from('tenant-assets').upload(path, file, { upsert: true, contentType: file.type })
+    if (error) { setSaveErr(error.message); return null }
+    const { data } = sb.storage.from('tenant-assets').getPublicUrl(path)
+    return data.publicUrl
+  }
+
+  async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setLogoUploading(true)
+    const url = await uploadImage(file, 'logo')
+    if (url) {
+      setLogoUrl(url)
+      await sb.from('studio_settings').upsert({ tenant_id: tenant!.id, logo_url: url }, { onConflict: 'tenant_id' })
+      reloadStudioSettings()
+    }
+    setLogoUploading(false)
+  }
+
+  async function handleHeroChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setHeroUploading(true)
+    const url = await uploadImage(file, 'hero')
+    if (url) {
+      setHeroUrl(url)
+      await sb.from('studio_settings').upsert({ tenant_id: tenant!.id, hero_image_url: url }, { onConflict: 'tenant_id' })
+      reloadStudioSettings()
+    }
+    setHeroUploading(false)
+  }
 
   // Load from DB on mount
   useEffect(() => {
@@ -158,6 +198,8 @@ function StudioProfileSection() {
             booking_buffer_hours: data.booking_buffer_hours,
             hours:                data.hours as StudioProfile['hours'],
           })
+          setLogoUrl(data.logo_url ?? null)
+          setHeroUrl(data.hero_image_url ?? null)
         }
       })
   }, [tenant?.id])
@@ -230,6 +272,38 @@ function StudioProfileSection() {
             <FormField label="Tagline" hint="Shown under the name in the nav bar.">
               <TextInput value={profile.tagline} onChange={v => setField('tagline', v)} placeholder="e.g. Brooklyn · Atelier no. 4" />
             </FormField>
+          </div>
+        </div>
+
+        {/* Branding images */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6">
+          <h3 className="mb-1 text-sm font-semibold text-slate-900">Branding</h3>
+          <p className="mb-5 text-xs text-slate-500">Logo appears in the nav bar. Cover photo appears at the top of the booking page. PNG, JPG, or WebP — max 5 MB.</p>
+          <div className="grid gap-6 sm:grid-cols-2">
+            {/* Logo */}
+            <div>
+              <div className="text-xs font-medium text-slate-700 mb-2">Studio Logo</div>
+              <label className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-5 transition ${logoUploading ? 'opacity-50' : 'border-slate-200 hover:border-slate-400'}`}>
+                {logoUrl
+                  ? <img src={logoUrl} alt="logo" className="h-16 w-16 rounded-xl object-contain" />
+                  : <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-stone-100 text-slate-400"><Icon name="Image" size={22} /></div>
+                }
+                <span className="text-xs text-slate-500">{logoUploading ? 'Uploading…' : logoUrl ? 'Click to replace' : 'Click to upload'}</span>
+                <input type="file" accept="image/*" className="hidden" disabled={logoUploading} onChange={handleLogoChange} />
+              </label>
+            </div>
+            {/* Hero / cover photo */}
+            <div>
+              <div className="text-xs font-medium text-slate-700 mb-2">Cover Photo</div>
+              <label className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-5 transition ${heroUploading ? 'opacity-50' : 'border-slate-200 hover:border-slate-400'}`}>
+                {heroUrl
+                  ? <img src={heroUrl} alt="hero" className="h-16 w-full rounded-xl object-cover" />
+                  : <div className="flex h-16 w-full items-center justify-center rounded-xl bg-stone-100 text-slate-400"><Icon name="ImagePlus" size={22} /></div>
+                }
+                <span className="text-xs text-slate-500">{heroUploading ? 'Uploading…' : heroUrl ? 'Click to replace' : 'Click to upload'}</span>
+                <input type="file" accept="image/*" className="hidden" disabled={heroUploading} onChange={handleHeroChange} />
+              </label>
+            </div>
           </div>
         </div>
 

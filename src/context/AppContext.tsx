@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import type { AppContextValue, Booking, BookingStatus, OccupancyMap, PaymentStatus, Space, Subscription, ToastState, UserRole, ViewType } from '../types/app'
+import type { AppContextValue, Booking, BookingStatus, OccupancyMap, PaymentStatus, Space, StudioSettings, Subscription, ToastState, UserRole, ViewType } from '../types/app'
 import type { DbSpace, DbBooking, DbSubscription, DbStudioSettings } from '../types/database'
 import { ALL_SPACES } from '../lib/mockData'
 import { dateKey, fmtLongDate, parseKey } from '../lib/dateHelpers'
@@ -60,6 +60,7 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
   const [toast,               setToast]               = useState<ToastState | null>(null)
   const [bookingBufferHours,  setBookingBufferHours]  = useState<number>(4)
   const [subscription,        setSubscription]        = useState<Subscription | null>(null)
+  const [studioSettings,      setStudioSettings]      = useState<StudioSettings | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Sync role from Supabase profile
@@ -67,17 +68,26 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
     if (profile) setUserRole(profile.role as UserRole)
   }, [profile])
 
-  // Load studio settings (booking buffer hours etc.)
-  useEffect(() => {
-    if (!tenant) return
-    sb.from('studio_settings')
-      .select('booking_buffer_hours')
+  // Load studio settings (name, logo, hero, buffer hours)
+  const reloadStudioSettings = useCallback(async () => {
+    if (!tenant) { setStudioSettings(null); return }
+    const { data } = await sb
+      .from('studio_settings')
+      .select('name, tagline, logo_url, hero_image_url, booking_buffer_hours')
       .eq('tenant_id', tenant.id)
-      .maybeSingle()
-      .then(({ data }: { data: Pick<DbStudioSettings, 'booking_buffer_hours'> | null }) => {
-        if (data?.booking_buffer_hours != null) setBookingBufferHours(data.booking_buffer_hours)
+      .maybeSingle() as { data: Pick<DbStudioSettings, 'name' | 'tagline' | 'logo_url' | 'hero_image_url' | 'booking_buffer_hours'> | null }
+    if (data) {
+      setBookingBufferHours(data.booking_buffer_hours)
+      setStudioSettings({
+        name:         data.name,
+        tagline:      data.tagline,
+        logoUrl:      data.logo_url,
+        heroImageUrl: data.hero_image_url,
       })
+    }
   }, [tenant?.id])
+
+  useEffect(() => { reloadStudioSettings() }, [reloadStudioSettings])
 
   // Load tenant spaces
   useEffect(() => {
@@ -341,6 +351,7 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
     parseKey,
     bookingBufferHours, setBookingBufferHours,
     subscription, reloadSubscription,
+    studioSettings, reloadStudioSettings,
   }
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>

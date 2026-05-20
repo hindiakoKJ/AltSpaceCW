@@ -122,6 +122,13 @@ export interface Subscription {
   renewsAt:     string | null
 }
 
+export interface StudioSettings {
+  name:          string
+  tagline:       string
+  logoUrl:       string | null
+  heroImageUrl:  string | null
+}
+
 export interface AppContextValue {
   view: ViewType
   setView: (v: ViewType) => void
@@ -143,4 +150,6 @@ export interface AppContextValue {
   setBookingBufferHours: (h: number) => void
   subscription: Subscription | null
   reloadSubscription: () => void
+  studioSettings: StudioSettings | null
+  reloadStudioSettings: () => void
 }

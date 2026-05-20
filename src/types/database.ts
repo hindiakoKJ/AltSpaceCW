@@ -13,6 +13,8 @@ export interface DbStudioSettings {
   website:              string
   booking_buffer_hours: number
   hours:                Record<string, { open: boolean; from: string; to: string }>
+  logo_url:             string | null
+  hero_image_url:       string | null
   updated_at:           string
 }
 

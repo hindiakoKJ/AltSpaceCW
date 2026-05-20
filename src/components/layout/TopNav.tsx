@@ -20,6 +20,8 @@ export function TopNav() {
   const app     = useApp()
   const { user, profile, signOut } = useAuth()
   const { tenant } = useTenant()
+  const studioName = app.studioSettings?.name ?? tenant?.name ?? 'AltSpaceCW'
+  const logoUrl    = app.studioSettings?.logoUrl ?? null
   const navigate  = useNavigate()
   const tabs = app.userRole === 'admin' ? [ADMIN_TAB] : CLIENT_TABS
   const displayName = profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'You'
@@ -45,13 +47,17 @@ export function TopNav() {
 
         {/* Brand */}
         <button onClick={() => app.setView('book')} className="flex items-center gap-2.5">
-          <Logo />
+          {logoUrl
+            ? <img src={logoUrl} alt={studioName} className="h-9 w-9 rounded-xl object-contain" />
+            : <Logo />
+          }
           <div className="text-left leading-none">
             <div className="flex items-center gap-1.5">
-              <span className="font-serif text-[22px] tracking-tight text-slate-900">AltSpace</span>
-              <span className="rounded-md bg-amber-500 px-1.5 py-0.5 font-mono text-[11px] font-bold text-slate-900 leading-none">CW</span>
+              <span className="font-serif text-[20px] tracking-tight text-slate-900 sm:text-[22px]">{studioName}</span>
             </div>
-            <div className="-mt-0.5 hidden text-[10px] italic text-slate-500 sm:block">a place to do the work.</div>
+            <div className="-mt-0.5 hidden text-[10px] italic text-slate-500 sm:block">
+              {app.studioSettings?.tagline ?? 'a place to do the work.'}
+            </div>
           </div>
         </button>
 
@@ -86,7 +92,7 @@ export function TopNav() {
         <div className="ml-auto flex items-center gap-3">
           <div className="hidden items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 lg:flex">
             <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 pulse-dot" />
-            <span className="text-xs text-slate-700">Studio open · {tenant?.name ?? 'AltSpaceCW'}</span>
+            <span className="text-xs text-slate-700">Studio open · {studioName}</span>
           </div>
 
           <button className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 hover:border-slate-300">
