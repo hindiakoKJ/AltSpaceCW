@@ -110,6 +110,18 @@ export interface AmenityItem {
   category: 'tech' | 'comfort' | 'services' | 'facilities'
 }
 
+export interface Subscription {
+  id:           string
+  planName:     string
+  billingCycle: 'monthly' | 'annual' | 'prepaid'
+  status:       'active' | 'expired' | 'cancelled'
+  creditsTotal: number
+  creditsUsed:  number
+  creditsLeft:  number
+  startedAt:    string
+  renewsAt:     string | null
+}
+
 export interface AppContextValue {
   view: ViewType
   setView: (v: ViewType) => void
@@ -129,4 +141,6 @@ export interface AppContextValue {
   parseKey: (k: string) => Date
   bookingBufferHours: number
   setBookingBufferHours: (h: number) => void
+  subscription: Subscription | null
+  reloadSubscription: () => void
 }

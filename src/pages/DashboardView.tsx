@@ -219,15 +219,24 @@ export function DashboardView() {
   const app = useApp()
   const { profile } = useAuth()
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
+  const { subscription } = app
 
   const upcoming = app.myBookings
     .filter(b => b.status === 'upcoming')
     .sort((a, b) => a.date.localeCompare(b.date))
   const past     = app.myBookings.filter(b => b.status === 'past').sort((a, b) => b.date.localeCompare(a.date))
 
-  const totalSpend   = past.reduce((s, b) => s + b.price, 0)
-  const monthlyCredits = 8
-  const usedCredits  = 2
+  const totalSpend = past.reduce((s, b) => s + b.price, 0)
+
+  function renewalHint(): string {
+    if (!subscription) return 'No active plan'
+    if (subscription.billingCycle === 'prepaid') return 'Prepaid — no expiry'
+    if (subscription.renewsAt) {
+      const d = new Date(subscription.renewsAt)
+      return `Renews ${d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}`
+    }
+    return 'Active'
+  }
 
   return (
     <div className="mx-auto max-w-[1320px] px-8 pb-24 pt-10">
@@ -251,16 +260,67 @@ export function DashboardView() {
         </div>
       </header>
 
+      {/* Subscription / plan card */}
+      <section className="mt-10">
+        {subscription && subscription.status === 'active' ? (
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Active plan</div>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="font-serif text-2xl text-slate-900">{subscription.planName}</span>
+                  <span className="rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-[11px] font-medium capitalize text-amber-800">
+                    {subscription.billingCycle}
+                  </span>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="text-[11px] uppercase tracking-wider text-slate-400">Credits used</div>
+                <div className="mt-0.5 font-serif text-xl text-slate-900">
+                  {subscription.creditsUsed} / {subscription.creditsTotal}
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-stone-100">
+              <div
+                className="h-full bg-amber-500 transition-all"
+                style={{ width: `${Math.min(100, (subscription.creditsUsed / subscription.creditsTotal) * 100)}%` }}
+              />
+            </div>
+            <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+              <span>{subscription.creditsLeft} day credit{subscription.creditsLeft !== 1 ? 's' : ''} remaining</span>
+              <span>{renewalHint()}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-6">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
+                <Icon name="CreditCard" size={20} />
+              </div>
+              <div>
+                <div className="font-semibold text-slate-900">
+                  {subscription?.status === 'expired' ? 'Your plan has expired' : 'No active membership plan'}
+                </div>
+                <div className="mt-0.5 text-sm text-slate-500">
+                  Contact your space admin to get assigned a plan and start using day credits.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
       {/* Member stat strip */}
-      <section className="mt-10 grid grid-cols-12 gap-4">
+      <section className="mt-6 grid grid-cols-12 gap-4">
         <MemberStat
           col="col-span-12 md:col-span-4"
           label="Day credits"
-          big={`${monthlyCredits - usedCredits}`}
-          sub={`of ${monthlyCredits} this month`}
-          meter={(monthlyCredits - usedCredits) / monthlyCredits}
+          big={subscription ? `${subscription.creditsLeft}` : '—'}
+          sub={subscription ? `of ${subscription.creditsTotal} this period` : 'no active plan'}
+          meter={subscription ? subscription.creditsLeft / subscription.creditsTotal : undefined}
           tone="amber"
-          hint="Refreshes Jun 1"
+          hint={renewalHint()}
         />
         <MemberStat
           col="col-span-6 md:col-span-4"
@@ -268,7 +328,7 @@ export function DashboardView() {
           big={`${past.length + upcoming.length}`}
           sub="lifetime"
           tone="slate"
-          hint="Joined March 2025"
+          hint={profile?.created_at ? `Joined ${new Date(profile.created_at).toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })}` : ''}
         />
         <MemberStat
           col="col-span-6 md:col-span-4"

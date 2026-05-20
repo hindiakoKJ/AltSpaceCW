@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import type { AppContextValue, Booking, BookingStatus, OccupancyMap, PaymentStatus, Space, ToastState, UserRole, ViewType } from '../types/app'
-import type { DbSpace, DbBooking } from '../types/database'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import type { AppContextValue, Booking, BookingStatus, OccupancyMap, PaymentStatus, Space, Subscription, ToastState, UserRole, ViewType } from '../types/app'
+import type { DbSpace, DbBooking, DbSubscription } from '../types/database'
 import { ALL_SPACES } from '../lib/mockData'
 import { dateKey, fmtLongDate, parseKey } from '../lib/dateHelpers'
 import { supabase } from '../lib/supabase'
@@ -9,6 +9,20 @@ import { useTenant } from './TenantContext'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any
+
+function toAppSubscription(db: DbSubscription): Subscription {
+  return {
+    id:           db.id,
+    planName:     db.plan_name,
+    billingCycle: db.billing_cycle,
+    status:       db.status,
+    creditsTotal: db.credits_total,
+    creditsUsed:  db.credits_used,
+    creditsLeft:  Math.max(0, db.credits_total - db.credits_used),
+    startedAt:    db.started_at,
+    renewsAt:     db.renews_at,
+  }
+}
 
 function toAppSpace(db: DbSpace): Space {
   return {
@@ -45,6 +59,7 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
   const [myBookings,          setMyBookings]          = useState<Booking[]>([])
   const [toast,               setToast]               = useState<ToastState | null>(null)
   const [bookingBufferHours,  setBookingBufferHours]  = useState<number>(4)
+  const [subscription,        setSubscription]        = useState<Subscription | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Sync role from Supabase profile
@@ -70,6 +85,36 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
     if (!user || !tenant) { setMyBookings([]); setOccupancy({}); return }
     loadData(user.id, tenant.id)
   }, [user?.id, tenant?.id])
+
+  // Load subscription for current user+tenant
+  const reloadSubscription = useCallback(async () => {
+    if (!user || !tenant) { setSubscription(null); return }
+    const { data } = await sb
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('tenant_id', tenant.id)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (data) {
+      // Lazy-expire: if renews_at is in the past, flip to expired
+      if (data.renews_at && data.renews_at < new Date().toISOString()) {
+        await sb.from('subscriptions').update({ status: 'expired' }).eq('id', data.id)
+        setSubscription(null)
+      } else {
+        setSubscription(toAppSubscription(data as DbSubscription))
+      }
+    } else {
+      setSubscription(null)
+    }
+  }, [user?.id, tenant?.id])
+
+  useEffect(() => {
+    reloadSubscription()
+  }, [reloadSubscription])
 
   async function loadData(userId: string, tenantId: string) {
     const { data: myData } = await sb
@@ -192,6 +237,49 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
   async function confirmPayment(id: string) {
     await sb.from('bookings').update({ payment_status: 'confirmed' }).eq('id', id)
     setMyBookings(bs => bs.map(b => b.id === id ? { ...b, payment_status: 'confirmed' as const } : b))
+
+    // Deduct 1 credit from the booking owner's active subscription
+    let bookingUserId: string | null = null
+    const foundBooking = myBookings.find(b => b.id === id)
+    if (foundBooking) {
+      // Only admin has access to myBookings of other users via admin view — try via DB
+      const { data: bRow } = await sb
+        .from('bookings')
+        .select('user_id')
+        .eq('id', id)
+        .maybeSingle()
+      bookingUserId = bRow?.user_id ?? null
+    } else {
+      const { data: bRow } = await sb
+        .from('bookings')
+        .select('user_id')
+        .eq('id', id)
+        .maybeSingle()
+      bookingUserId = bRow?.user_id ?? null
+    }
+
+    if (bookingUserId && tenant) {
+      const { data: sub } = await sb
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', bookingUserId)
+        .eq('tenant_id', tenant.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (sub) {
+        await sb.from('subscriptions')
+          .update({ credits_used: (sub.credits_used ?? 0) + 1 })
+          .eq('id', sub.id)
+        // If this is the current user's sub, reload
+        if (bookingUserId === user?.id) {
+          reloadSubscription()
+        }
+      }
+    }
+
     showToast({ kind: 'success', title: 'Payment confirmed!', body: 'Booking is fully reserved.' })
   }
 
@@ -240,6 +328,7 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
     toast,
     parseKey,
     bookingBufferHours, setBookingBufferHours,
+    subscription, reloadSubscription,
   }
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>

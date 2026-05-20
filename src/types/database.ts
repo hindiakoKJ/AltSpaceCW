@@ -1,5 +1,19 @@
 // Database types — mirrors supabase/schema.sql exactly
 
+export interface DbSubscription {
+  id:            string
+  tenant_id:     string
+  user_id:       string
+  plan_name:     string
+  billing_cycle: 'monthly' | 'annual' | 'prepaid'
+  status:        'active' | 'expired' | 'cancelled'
+  credits_total: number
+  credits_used:  number
+  started_at:    string
+  renews_at:     string | null
+  created_at:    string
+}
+
 export interface Profile {
   id:         string
   full_name:  string
@@ -56,6 +70,11 @@ export interface Database {
         Row:    DbBooking
         Insert: Omit<DbBooking, 'id' | 'created_at' | 'space'>
         Update: Partial<Omit<DbBooking, 'id' | 'created_at' | 'space'>>
+      }
+      subscriptions: {
+        Row:    DbSubscription
+        Insert: Omit<DbSubscription, 'id' | 'created_at'>
+        Update: Partial<Omit<DbSubscription, 'id' | 'created_at'>>
       }
     }
     Views: Record<string, never>

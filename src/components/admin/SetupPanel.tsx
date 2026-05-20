@@ -960,33 +960,251 @@ function AmenitiesSection() {
 /* ── Members section ─────────────────────────────────────────────────── */
 
 type MemberRow = { id: string; full_name: string | null; email: string; created_at: string }
+type MemberSub = { plan_name: string; billing_cycle: string; credits_total: number; credits_used: number } | null
+
+type AssignPlanForm = {
+  planId:       string
+  billingCycle: 'monthly' | 'annual' | 'prepaid'
+  credits:      string
+  startDate:    string
+}
+
+function calcRenewsAt(startDate: string, cycle: 'monthly' | 'annual' | 'prepaid'): string | null {
+  if (cycle === 'prepaid') return null
+  const d = new Date(startDate)
+  if (cycle === 'monthly') d.setMonth(d.getMonth() + 1)
+  else d.setFullYear(d.getFullYear() + 1)
+  return d.toISOString()
+}
+
+function AssignPlanModal({
+  member,
+  tenantId,
+  onClose,
+  onAssigned,
+}: {
+  member: MemberRow
+  tenantId: string
+  onClose: () => void
+  onAssigned: () => void
+}) {
+  const today = new Date().toISOString().split('T')[0]
+  const [form, setForm] = useState<AssignPlanForm>({
+    planId:       DEFAULT_PLANS[0].id,
+    billingCycle: 'monthly',
+    credits:      String(DEFAULT_PLANS[0].dayCredits ?? 8),
+    startDate:    today,
+  })
+  const [saving, setSaving]   = useState(false)
+  const [error,  setError]    = useState<string | null>(null)
+
+  const selectedPlan = DEFAULT_PLANS.find(p => p.id === form.planId) ?? DEFAULT_PLANS[0]
+  const renewsAt     = calcRenewsAt(form.startDate, form.billingCycle)
+
+  function handlePlanChange(planId: string) {
+    const plan = DEFAULT_PLANS.find(p => p.id === planId) ?? DEFAULT_PLANS[0]
+    setForm(f => ({
+      ...f,
+      planId,
+      credits: String(plan.dayCredits ?? 8),
+    }))
+  }
+
+  async function handleSubmit() {
+    const credits = parseInt(form.credits, 10)
+    if (!credits || credits < 1) { setError('Credits must be at least 1.'); return }
+    setSaving(true)
+    setError(null)
+    try {
+      // Cancel any existing active subscription for this user+tenant
+      await sb.from('subscriptions')
+        .update({ status: 'cancelled' })
+        .eq('user_id', member.id)
+        .eq('tenant_id', tenantId)
+        .eq('status', 'active')
+
+      // Insert new subscription
+      const { error: insertError } = await sb.from('subscriptions').insert({
+        tenant_id:     tenantId,
+        user_id:       member.id,
+        plan_name:     selectedPlan.name,
+        billing_cycle: form.billingCycle,
+        status:        'active',
+        credits_total: credits,
+        credits_used:  0,
+        started_at:    new Date(form.startDate).toISOString(),
+        renews_at:     renewsAt,
+      })
+      if (insertError) throw new Error(insertError.message)
+      onAssigned()
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !saving && onClose()} />
+      <div className="relative w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-soft-lg">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Assign plan</div>
+            <h3 className="mt-0.5 text-xl font-semibold text-slate-900">
+              {member.full_name ?? member.email}
+            </h3>
+          </div>
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-stone-100 disabled:opacity-50"
+          >
+            <Icon name="X" size={16} />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <FormField label="Plan">
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-slate-900 transition">
+              <select
+                value={form.planId}
+                onChange={e => handlePlanChange(e.target.value)}
+                className="w-full bg-transparent py-2.5 px-3 text-sm text-slate-900 focus:outline-none"
+              >
+                {DEFAULT_PLANS.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} — {p.dayCredits === null ? 'Unlimited' : `${p.dayCredits} credits`}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </FormField>
+
+          <FormField label="Billing cycle">
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-slate-900 transition">
+              <select
+                value={form.billingCycle}
+                onChange={e => setForm(f => ({ ...f, billingCycle: e.target.value as AssignPlanForm['billingCycle'] }))}
+                className="w-full bg-transparent py-2.5 px-3 text-sm text-slate-900 focus:outline-none"
+              >
+                <option value="monthly">Monthly</option>
+                <option value="annual">Annual</option>
+                <option value="prepaid">Prepaid (one-time)</option>
+              </select>
+            </div>
+          </FormField>
+
+          <FormField label="Day credits" hint="Pre-filled from plan — adjust as needed.">
+            <TextInput
+              value={form.credits}
+              onChange={v => setForm(f => ({ ...f, credits: v }))}
+              placeholder="8"
+            />
+          </FormField>
+
+          <FormField label="Start date">
+            <input
+              type="date"
+              value={form.startDate}
+              onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
+              className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-900 focus:border-slate-900 focus:outline-none transition"
+            />
+          </FormField>
+
+          <div className="rounded-xl border border-slate-100 bg-stone-50 px-4 py-3 text-sm text-slate-600">
+            <span className="font-medium">Renews at: </span>
+            {renewsAt
+              ? new Date(renewsAt).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
+              : 'No expiry (prepaid)'}
+          </div>
+
+          {error && (
+            <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">
+              <Icon name="AlertCircle" size={14} />
+              {error}
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-1">
+            <button
+              onClick={onClose}
+              disabled={saving}
+              className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300 disabled:opacity-50 transition"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={saving}
+              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-slate-900 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:bg-slate-300 transition"
+            >
+              {saving && <Icon name="Loader" size={14} className="animate-spin" />}
+              {saving ? 'Assigning…' : 'Assign plan'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function MembersSection() {
   useAuth()
   const { tenant } = useTenant()
 
-  const [members, setMembers]     = useState<MemberRow[]>([])
-  const [loading, setLoading]     = useState(true)
-  const [showModal, setShowModal] = useState(false)
-  const [created, setCreated]     = useState<{ email: string; password: string } | null>(null)
+  const [members,    setMembers]    = useState<MemberRow[]>([])
+  const [memberSubs, setMemberSubs] = useState<Record<string, MemberSub>>({})
+  const [loading,    setLoading]    = useState(true)
+  const [showModal,  setShowModal]  = useState(false)
+  const [created,    setCreated]    = useState<{ email: string; password: string } | null>(null)
+  const [assignFor,  setAssignFor]  = useState<MemberRow | null>(null)
 
-  const [form, setForm]       = useState({ full_name: '', email: '', password: '' })
-  const [saving, setSaving]   = useState(false)
+  const [form, setForm]           = useState({ full_name: '', email: '', password: '' })
+  const [saving, setSaving]       = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+
+  async function loadMembers(tenantId: string) {
+    setLoading(true)
+    const { data } = await sb
+      .from('profiles')
+      .select('id, full_name, email, created_at')
+      .eq('tenant_id', tenantId)
+      .eq('role', 'client')
+      .order('created_at', { ascending: false })
+    const rows: MemberRow[] = data ?? []
+    setMembers(rows)
+
+    // Load active subscription for each member
+    if (rows.length > 0) {
+      const userIds = rows.map((r: MemberRow) => r.id)
+      const { data: subs } = await sb
+        .from('subscriptions')
+        .select('user_id, plan_name, billing_cycle, credits_total, credits_used')
+        .eq('tenant_id', tenantId)
+        .eq('status', 'active')
+        .in('user_id', userIds)
+      const subMap: Record<string, MemberSub> = {}
+      if (subs) {
+        for (const s of subs as Array<{ user_id: string; plan_name: string; billing_cycle: string; credits_total: number; credits_used: number }>) {
+          subMap[s.user_id] = {
+            plan_name:     s.plan_name,
+            billing_cycle: s.billing_cycle,
+            credits_total: s.credits_total,
+            credits_used:  s.credits_used,
+          }
+        }
+      }
+      setMemberSubs(subMap)
+    }
+    setLoading(false)
+  }
 
   // Load existing members for this tenant
   useEffect(() => {
     if (!tenant) return
-    setLoading(true)
-    sb.from('profiles')
-      .select('id, full_name, email, created_at')
-      .eq('tenant_id', tenant.id)
-      .eq('role', 'client')
-      .order('created_at', { ascending: false })
-      .then(({ data }: { data: MemberRow[] | null }) => {
-        setMembers(data ?? [])
-        setLoading(false)
-      })
+    loadMembers(tenant.id)
   }, [tenant])
 
   function openModal() {
@@ -1091,21 +1309,46 @@ function MembersSection() {
               <tr>
                 <th className="px-5 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-slate-400">Name</th>
                 <th className="px-5 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-slate-400">Email</th>
+                <th className="px-5 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-slate-400">Plan</th>
                 <th className="px-5 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-slate-400">Joined</th>
+                <th className="px-5 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {members.map(m => (
-                <tr key={m.id} className="hover:bg-stone-50 transition">
-                  <td className="px-5 py-3 font-medium text-slate-900">
-                    {m.full_name ?? <span className="text-slate-400 italic">—</span>}
-                  </td>
-                  <td className="px-5 py-3 text-slate-600">{m.email}</td>
-                  <td className="px-5 py-3 text-slate-400">
-                    {new Date(m.created_at).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}
-                  </td>
-                </tr>
-              ))}
+              {members.map(m => {
+                const sub = memberSubs[m.id] ?? null
+                const creditsLeft = sub ? Math.max(0, sub.credits_total - sub.credits_used) : 0
+                return (
+                  <tr key={m.id} className="hover:bg-stone-50 transition">
+                    <td className="px-5 py-3 font-medium text-slate-900">
+                      {m.full_name ?? <span className="text-slate-400 italic">—</span>}
+                    </td>
+                    <td className="px-5 py-3 text-slate-600">{m.email}</td>
+                    <td className="px-5 py-3">
+                      {sub ? (
+                        <div>
+                          <div className="text-sm font-medium text-slate-900">{sub.plan_name}</div>
+                          <div className="text-xs text-slate-500 capitalize">{creditsLeft} credit{creditsLeft !== 1 ? 's' : ''} left · {sub.billing_cycle}</div>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 text-xs italic">No plan</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3 text-slate-400">
+                      {new Date(m.created_at).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <button
+                        onClick={() => setAssignFor(m)}
+                        className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-900 hover:bg-stone-50 transition"
+                      >
+                        <Icon name="CreditCard" size={12} />
+                        Assign plan
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -1213,6 +1456,19 @@ function MembersSection() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Assign plan modal */}
+      {assignFor && tenant && (
+        <AssignPlanModal
+          member={assignFor}
+          tenantId={tenant.id}
+          onClose={() => setAssignFor(null)}
+          onAssigned={() => {
+            setAssignFor(null)
+            loadMembers(tenant.id)
+          }}
+        />
       )}
     </div>
   )

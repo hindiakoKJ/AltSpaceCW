@@ -3,6 +3,7 @@ import type { Space } from '../../types/app'
 import { Avatar } from '../ui/Avatar'
 import { Icon } from '../ui/Icon'
 import { useAuth } from '../../context/AuthContext'
+import { useApp } from '../../context/AppContext'
 import { fmtLongDate, fmtRange } from '../../lib/dateHelpers'
 
 function initials(name: string | null | undefined, email: string | null | undefined) {
@@ -41,10 +42,18 @@ function SummaryLine({ icon, label, value }: { icon: string; label: string; valu
 
 export function BookingSummary({ date, range, space, total, hours, onConfirm, onClear }: BookingSummaryProps) {
   const { profile } = useAuth()
+  const { subscription } = useApp()
   const displayName = profile?.full_name || profile?.email?.split('@')[0] || 'Member'
   const avatarInitials = initials(profile?.full_name, profile?.email)
   const me = { name: displayName, avatar: avatarInitials, color: 'bg-amber-100 text-amber-900', plan: '' }
   const ready = !!space && !!range
+
+  function subLine(): string {
+    if (!subscription) return 'No active plan · Pay per booking'
+    if (subscription.status === 'expired') return `${subscription.planName} · Expired — pay per booking`
+    const n = subscription.creditsLeft
+    return `${subscription.planName} · ${n} day credit${n !== 1 ? 's' : ''} left`
+  }
 
   return (
     <div className="sticky top-[88px]">
@@ -125,7 +134,7 @@ export function BookingSummary({ date, range, space, total, hours, onConfirm, on
         <Avatar member={me} size={36} />
         <div className="flex-1">
           <div className="text-sm font-semibold text-slate-900">{displayName}</div>
-          <div className="text-xs text-slate-500">Resident plan · 8 day-credits left this month</div>
+          <div className="text-xs text-slate-500">{subLine()}</div>
         </div>
         <Icon name="BadgeCheck" size={18} className="text-amber-600" />
       </div>
