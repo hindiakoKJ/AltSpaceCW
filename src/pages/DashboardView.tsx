@@ -9,6 +9,83 @@ import { Icon } from '../components/ui/Icon'
 import { Avatar } from '../components/ui/Avatar'
 import { CountdownTimer } from '../components/ui/CountdownTimer'
 
+/* ── Receipt helpers ──────────────────────────────────────────────── */
+
+function downloadReceipt(booking: Booking) {
+  const d       = new Date(booking.date + 'T00:00:00')
+  const dateStr = d.toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  const range   = fmtRange(booking.start, booking.end)
+  const hours   = booking.end - booking.start
+  const ref     = booking.id.slice(0, 8).toUpperCase()
+  const psLabel = booking.payment_status === 'confirmed' ? 'Confirmed' : booking.payment_status === 'awaiting_confirmation' ? 'Awaiting confirmation' : 'Pending'
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>Receipt – ${ref}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Georgia,serif;color:#1e293b;padding:52px;max-width:580px;margin:0 auto}
+.logo{font-size:22px;font-weight:700;letter-spacing:-.5px}
+.logo span{background:#f59e0b;color:#1c1917;padding:2px 7px;border-radius:4px;font-family:monospace;font-size:12px;margin-left:5px}
+.tagline{font-size:11px;color:#94a3b8;font-style:italic;margin-top:3px;margin-bottom:40px}
+h1{font-size:30px;margin-bottom:3px}
+.ref{font-size:12px;color:#94a3b8;font-family:monospace;margin-bottom:30px}
+hr{border:none;border-top:1px solid #e2e8f0;margin:20px 0}
+.row{display:flex;justify-content:space-between;padding:7px 0;font-size:14px}
+.row .lbl{color:#64748b}.row .val{font-weight:500}
+.total{display:flex;justify-content:space-between;padding:14px 0;font-size:20px;font-weight:700}
+.note{margin-top:30px;font-size:11px;color:#94a3b8;line-height:1.7}
+@media print{body{padding:28px}}
+</style></head><body>
+<div class="logo">AltSpace<span>CW</span></div>
+<div class="tagline">a place to do the work.</div>
+<h1>Booking Receipt</h1>
+<div class="ref">Ref # ${ref}</div>
+<hr>
+<div class="row"><span class="lbl">Date</span><span class="val">${dateStr}</span></div>
+<div class="row"><span class="lbl">Space</span><span class="val">${booking.space.label}</span></div>
+<div class="row"><span class="lbl">Zone</span><span class="val">${booking.space.zone}</span></div>
+<div class="row"><span class="lbl">Hours</span><span class="val">${range} &nbsp;·&nbsp; ${hours}h</span></div>
+<div class="row"><span class="lbl">Payment</span><span class="val">${psLabel}</span></div>
+<hr>
+<div class="total"><span>Total charged</span><span>&#x20B1;${booking.price.toLocaleString()}</span></div>
+<hr>
+<div class="note">Payment is collected by the operator via cash or bank transfer. This receipt does not constitute a VAT official invoice. AltSpaceCW is operated by HNSCorpPH.</div>
+</body></html>`
+
+  const win = window.open('', '_blank', 'width=720,height=900')
+  if (!win) return
+  win.document.write(html)
+  win.document.close()
+  win.focus()
+  // slight delay so the document finishes rendering before print dialog
+  setTimeout(() => { win.print() }, 350)
+}
+
+function exportCSV(bookings: Booking[]) {
+  const headers = ['Date', 'Space', 'Zone', 'Type', 'Time Start', 'Time End', 'Hours', 'Charge (PHP)', 'Payment Status']
+  const rows = bookings.map(b => [
+    b.date,
+    b.space.label,
+    b.space.zone,
+    b.space.type,
+    `${b.start}:00`,
+    `${b.end}:00`,
+    b.end - b.start,
+    b.price,
+    b.payment_status,
+  ])
+  const csv  = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\r\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href     = url
+  a.download = `altspacecw-history-${new Date().toISOString().slice(0, 10)}.csv`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
 function Section2({ eyebrow, title, children }: { eyebrow: string; title: ReactNode; children: ReactNode }) {
@@ -406,7 +483,10 @@ export function DashboardView() {
                       <div className="font-mono text-sm text-slate-900">₱{b.price.toLocaleString()}</div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-300 hover:bg-stone-50">
+                      <button
+                        onClick={() => downloadReceipt(b)}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-300 hover:bg-stone-50"
+                      >
                         <Icon name="Download" size={12} />
                         PDF
                       </button>
@@ -419,7 +499,7 @@ export function DashboardView() {
           </div>
           <div className="flex items-center justify-between border-t border-slate-100 bg-stone-50/60 px-6 py-3 text-xs text-slate-500">
             <span>Showing {past.length} of {past.length} visits</span>
-            <button className="text-slate-700 hover:underline">Export all (CSV)</button>
+            <button onClick={() => exportCSV(past)} className="text-slate-700 hover:underline">Export all (CSV)</button>
           </div>
         </div>
       </Section2>
