@@ -89,29 +89,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── Dashboard preview strip ─────────────────────────────────── */}
-      <section className="border-y border-slate-200 bg-slate-900 py-16">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {[
-              { label: 'Spaces managed',   value: '31',   unit: 'desks & rooms',    color: 'text-amber-300' },
-              { label: 'Bookings today',   value: '12',   unit: 'confirmed',         color: 'text-emerald-400' },
-              { label: 'Occupancy rate',   value: '68%',  unit: 'current floor',     color: 'text-white' },
-              { label: 'Revenue today',    value: '₱4.2k', unit: 'collected',        color: 'text-amber-300' },
-            ].map(s => (
-              <div key={s.label} className="rounded-2xl border border-white/10 bg-white/5 p-5 text-center">
-                <div className="text-[10px] uppercase tracking-widest text-white/40">{s.label}</div>
-                <div className={`mt-2 font-serif text-4xl leading-none ${s.color}`}>{s.value}</div>
-                <div className="mt-1 text-xs text-white/40">{s.unit}</div>
-              </div>
-            ))}
-          </div>
-          <p className="mt-6 text-center text-xs uppercase tracking-widest text-white/30">
-            Live operator dashboard — real-time visibility across your entire floor
-          </p>
-        </div>
-      </section>
-
       {/* ─── Features ────────────────────────────────────────────────── */}
       <section id="features" className="mx-auto max-w-6xl px-6 py-24">
         <div className="mb-14 text-center">
