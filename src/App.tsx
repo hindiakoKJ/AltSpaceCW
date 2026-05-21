@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react'
 import { Component } from 'react'
 import type { ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
@@ -6,6 +7,7 @@ import { TenantProvider } from './context/TenantContext'
 import { AppProvider } from './context/AppContext'
 import { AppShell } from './components/layout/AppShell'
 import LoginPage from './pages/LoginPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import ConsolePage from './pages/ConsolePage'
 import LandingPage from './pages/LandingPage'
 import PrivacyPage from './pages/PrivacyPage'
@@ -19,6 +21,9 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
     this.state = { error: null }
   }
   static getDerivedStateFromError(error: Error) { return { error } }
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    Sentry.captureException(error, { extra: { componentStack: info.componentStack } })
+  }
   render() {
     if (this.state.error) {
       return (
@@ -168,7 +173,8 @@ export default function App() {
           <Route path="/"             element={<LandingPage />} />
           <Route path="/privacy"      element={<PrivacyPage />} />
           <Route path="/contact"      element={<ContactPage />} />
-          <Route path="/login"        element={<LoginPage />} />
+          <Route path="/login"          element={<LoginPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/console"      element={<RequireAuth><RequireConsole><ConsolePage /></RequireConsole></RequireAuth>} />
           <Route path="/:slug/admin"  element={<TenantApp initialView="admin" />} />
           <Route path="/:slug"        element={<TenantApp initialView="book"  />} />

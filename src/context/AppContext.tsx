@@ -229,8 +229,20 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
     return !(end <= (slot.start ?? 0) || start >= (slot.end ?? 24))
   }
 
-  function addBooking(b: Omit<Booking, 'id' | 'status' | 'payment_status' | 'client_deadline' | 'admin_deadline'>) {
+  async function addBooking(b: Omit<Booking, 'id' | 'status' | 'payment_status' | 'client_deadline' | 'admin_deadline'>) {
     if (!user || !tenant) return
+
+    // ── Rate limit: max 5 bookings per user in any rolling 24-hour window ──
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    const { count: recentCount } = await sb
+      .from('bookings')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', since)
+    if ((recentCount ?? 0) >= 5) {
+      showToast({ kind: 'error', title: 'Too many bookings', body: 'You\'ve reached the 5-booking limit for a 24-hour window. Try again later.' })
+      return
+    }
 
     const tempId = `tmp-${Date.now()}`
     const clientDeadline = new Date(Date.now() + 30 * 60 * 1000).toISOString()
@@ -249,7 +261,7 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
     }))
     showToast({ kind: 'success', title: 'Booking confirmed!', body: `${b.space.label} · ${fmtLongDate(parseKey(b.date))}` })
 
-    sb.from('bookings').insert({
+    const { data, error } = await sb.from('bookings').insert({
       user_id:         user.id,
       space_id:        b.space.id,
       tenant_id:       tenant.id,
@@ -260,19 +272,33 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
       status:          'upcoming',
       payment_status:  'pending',
       client_deadline: clientDeadline,
-    }).select('id').single().then(({ data, error }: { data: { id: string } | null; error: { message: string } | null }) => {
-      if (error) {
-        setMyBookings(bs => bs.filter(x => x.id !== tempId))
-        setOccupancy(o => {
-          const day = { ...(o[b.date] ?? {}) }
-          if (day[b.space.id]?.mine) delete day[b.space.id]
-          return { ...o, [b.date]: day }
-        })
-        showToast({ kind: 'error', title: 'Booking failed', body: error.message })
-      } else if (data) {
-        setMyBookings(bs => bs.map(x => x.id === tempId ? { ...x, id: data.id } : x))
-      }
-    })
+    }).select('id').single()
+
+    if (error) {
+      setMyBookings(bs => bs.filter(x => x.id !== tempId))
+      setOccupancy(o => {
+        const day = { ...(o[b.date] ?? {}) }
+        if (day[b.space.id]?.mine) delete day[b.space.id]
+        return { ...o, [b.date]: day }
+      })
+      showToast({ kind: 'error', title: 'Booking failed', body: (error as { message: string }).message })
+      return
+    }
+
+    const realId = (data as { id: string }).id
+    setMyBookings(bs => bs.map(x => x.id === tempId ? { ...x, id: realId } : x))
+
+    // ── Email notification: booking created ──
+    if (profile?.email) {
+      supabase.functions.invoke('send-booking-email', {
+        body: {
+          type: 'booking_created',
+          to_email: profile.email,
+          to_name: profile.full_name ?? profile.email.split('@')[0],
+          booking: { id: realId, space_label: b.space.label, space_zone: b.space.zone, date: b.date, start: b.start, end: b.end, price: b.price },
+        },
+      }).catch(() => { /* email failure is non-fatal */ })
+    }
   }
 
   async function markPaid(id: string) {
@@ -335,6 +361,26 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
     }
 
     showToast({ kind: 'success', title: 'Payment confirmed!', body: 'Booking is fully reserved.' })
+
+    // ── Email notification: payment confirmed ──
+    if (bookingUserId) {
+      const { data: memberProfile } = await sb
+        .from('profiles')
+        .select('email, full_name')
+        .eq('id', bookingUserId)
+        .maybeSingle()
+      const confirmedBooking = myBookings.find(b => b.id === id)
+      if (memberProfile?.email && confirmedBooking) {
+        supabase.functions.invoke('send-booking-email', {
+          body: {
+            type: 'payment_confirmed',
+            to_email: memberProfile.email,
+            to_name: memberProfile.full_name ?? memberProfile.email.split('@')[0],
+            booking: { id, space_label: confirmedBooking.space.label, space_zone: confirmedBooking.space.zone, date: confirmedBooking.date, start: confirmedBooking.start, end: confirmedBooking.end, price: confirmedBooking.price },
+          },
+        }).catch(() => { /* email failure is non-fatal */ })
+      }
+    }
   }
 
   function cancelBooking(id: string) {
