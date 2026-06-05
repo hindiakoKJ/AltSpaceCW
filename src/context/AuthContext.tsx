@@ -34,7 +34,7 @@ async function loadProfile(userId: string): Promise<Profile | null> {
     .select('*, tenant:tenants(id, name, slug, status)')
     .eq('id', userId)
     .single()
-  if (error) console.error('[loadProfile]', error.message, 'userId:', userId)
+  if (error && import.meta.env.DEV) console.error('[loadProfile]', error.message)
   return (data as Profile | null)
 }
 

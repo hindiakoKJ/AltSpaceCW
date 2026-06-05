@@ -1,5 +1,5 @@
 // Deploy with:
-//   npx supabase functions deploy create-user --project-ref ewvxsyixfiyisdtvnhwg
+//   npx supabase functions deploy create-user --project-ref <your-project-ref>
 //
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are injected automatically by the edge runtime.
 //

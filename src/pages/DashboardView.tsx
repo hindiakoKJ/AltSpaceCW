@@ -11,6 +11,16 @@ import { CountdownTimer } from '../components/ui/CountdownTimer'
 
 /* ── Receipt helpers ──────────────────────────────────────────────── */
 
+/** Escape HTML entities to prevent XSS in the receipt popup */
+function esc(s: string | number): string {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function downloadReceipt(booking: Booking) {
   const d       = new Date(booking.date + 'T00:00:00')
   const dateStr = d.toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
@@ -20,7 +30,7 @@ function downloadReceipt(booking: Booking) {
   const psLabel = booking.payment_status === 'confirmed' ? 'Confirmed' : booking.payment_status === 'awaiting_confirmation' ? 'Awaiting confirmation' : 'Pending'
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-<title>Receipt – ${ref}</title>
+<title>Receipt – ${esc(ref)}</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:Georgia,serif;color:#1e293b;padding:52px;max-width:580px;margin:0 auto}
@@ -39,15 +49,15 @@ hr{border:none;border-top:1px solid #e2e8f0;margin:20px 0}
 <div class="logo">AltSpace<span>CW</span></div>
 <div class="tagline">a place to do the work.</div>
 <h1>Booking Receipt</h1>
-<div class="ref">Ref # ${ref}</div>
+<div class="ref">Ref # ${esc(ref)}</div>
 <hr>
-<div class="row"><span class="lbl">Date</span><span class="val">${dateStr}</span></div>
-<div class="row"><span class="lbl">Space</span><span class="val">${booking.space.label}</span></div>
-<div class="row"><span class="lbl">Zone</span><span class="val">${booking.space.zone}</span></div>
-<div class="row"><span class="lbl">Hours</span><span class="val">${range} &nbsp;·&nbsp; ${hours}h</span></div>
-<div class="row"><span class="lbl">Payment</span><span class="val">${psLabel}</span></div>
+<div class="row"><span class="lbl">Date</span><span class="val">${esc(dateStr)}</span></div>
+<div class="row"><span class="lbl">Space</span><span class="val">${esc(booking.space.label)}</span></div>
+<div class="row"><span class="lbl">Zone</span><span class="val">${esc(booking.space.zone)}</span></div>
+<div class="row"><span class="lbl">Hours</span><span class="val">${esc(range)} &nbsp;·&nbsp; ${esc(hours)}h</span></div>
+<div class="row"><span class="lbl">Payment</span><span class="val">${esc(psLabel)}</span></div>
 <hr>
-<div class="total"><span>Total charged</span><span>&#x20B1;${booking.price.toLocaleString()}</span></div>
+<div class="total"><span>Total charged</span><span>&#x20B1;${esc(booking.price.toLocaleString())}</span></div>
 <hr>
 <div class="note">Payment is collected by the operator via cash or bank transfer. This receipt does not constitute a VAT official invoice. AltSpaceCW is operated by HNSCorpPH.</div>
 </body></html>`
