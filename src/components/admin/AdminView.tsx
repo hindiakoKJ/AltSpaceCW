@@ -21,7 +21,7 @@ type AdminTab = 'operations' | 'setup'
 function OccupancyCard({ pct, occupied, total }: { pct: number; occupied: number; total: number }) {
   const r = 56, c = 2 * Math.PI * r
   return (
-    <div className="col-span-12 md:col-span-5 rounded-3xl border border-slate-200 bg-slate-900 p-6 text-white shadow-soft">
+    <div className="col-span-12 sm:col-span-7 md:col-span-5 rounded-3xl border border-slate-200 bg-slate-900 p-6 text-white shadow-soft">
       <div className="flex items-start justify-between">
         <div>
           <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-amber-300">Today&rsquo;s occupancy</div>
@@ -59,7 +59,7 @@ function RevenueCard({ amount, delta }: { amount: number; delta: number }) {
   const max    = Math.max(...points)
 
   return (
-    <div className="col-span-12 md:col-span-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
+    <div className="col-span-12 sm:col-span-5 md:col-span-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
       <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Total revenue · today</div>
       <div className="mt-3 flex items-baseline gap-2">
         <span className="font-serif text-6xl leading-none text-slate-900">₱{amount.toLocaleString()}</span>
@@ -98,7 +98,7 @@ function RevenueCard({ amount, delta }: { amount: number; delta: number }) {
 
 function ActiveUsersCard({ users, count }: { users: (typeof MEMBERS[number] | undefined)[]; count: number }) {
   return (
-    <div className="col-span-12 md:col-span-3 rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
+    <div className="col-span-12 sm:col-span-4 md:col-span-3 rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
       <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Active members</div>
       <div className="mt-3 flex items-baseline gap-2">
         <span className="font-serif text-6xl leading-none text-slate-900">{count}</span>
@@ -132,7 +132,7 @@ function BreakdownCard({ type, day, spaces }: { type: string; day: Record<string
   const accentBar = { amber: 'bg-amber-500', emerald: 'bg-emerald-500', slate: 'bg-slate-700' }[meta.accent]
 
   return (
-    <div className="col-span-12 md:col-span-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+    <div className="col-span-12 sm:col-span-4 md:col-span-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-stone-100 text-slate-700">

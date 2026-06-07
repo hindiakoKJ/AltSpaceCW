@@ -8,7 +8,7 @@ export default function LandingPage() {
 
       {/* ─── Nav ─────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-[#F6F4EF]/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <Logo />
             <div className="text-left leading-none">
@@ -21,23 +21,23 @@ export default function LandingPage() {
           </div>
 
           <nav className="hidden items-center gap-8 md:flex">
-            <a href="#features"    className="text-sm text-slate-600 transition-colors hover:text-slate-900">Features</a>
+            <a href="#features"     className="text-sm text-slate-600 transition-colors hover:text-slate-900">Features</a>
             <a href="#how-it-works" className="text-sm text-slate-600 transition-colors hover:text-slate-900">How it works</a>
-            <a href="#pricing"     className="text-sm text-slate-600 transition-colors hover:text-slate-900">Pricing</a>
-            <Link to="/privacy"    className="text-sm text-slate-600 transition-colors hover:text-slate-900">Privacy</Link>
-            <Link to="/contact"    className="text-sm text-slate-600 transition-colors hover:text-slate-900">Contact</Link>
+            <a href="#pricing"      className="text-sm text-slate-600 transition-colors hover:text-slate-900">Pricing</a>
+            <Link to="/privacy"     className="text-sm text-slate-600 transition-colors hover:text-slate-900">Privacy</Link>
+            <Link to="/contact"     className="text-sm text-slate-600 transition-colors hover:text-slate-900">Contact</Link>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link
               to="/login"
-              className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300"
+              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300 sm:px-5 sm:py-2.5"
             >
               Sign in
             </Link>
             <Link
               to="/contact"
-              className="rounded-full bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-400"
+              className="hidden rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-400 sm:block sm:px-5 sm:py-2.5"
             >
               Get a demo
             </Link>
@@ -46,24 +46,33 @@ export default function LandingPage() {
       </header>
 
       {/* ─── Hero ────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-5xl px-6 pb-28 pt-24 text-center">
-        <div className="fade-up mb-8 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 shadow-soft">
+      <section className="mx-auto max-w-5xl px-4 pb-14 pt-12 text-center sm:px-6 sm:pb-20 sm:pt-16 md:pb-28 md:pt-24">
+        <div className="fade-up mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 shadow-soft sm:mb-8 sm:px-4 sm:py-2 sm:text-sm">
           <span className="pulse-dot inline-block h-2 w-2 rounded-full bg-emerald-500" />
           Built for co-working space operators in the Philippines
         </div>
 
-        <h1 className="fade-up mb-6 font-serif text-[68px] leading-[1.05] tracking-tight text-slate-900" style={{ animationDelay: '0.05s' }}>
+        <h1
+          className="fade-up mb-5 font-serif text-[36px] leading-[1.08] tracking-tight text-slate-900 sm:mb-6 sm:text-[48px] md:text-[60px] lg:text-[68px] lg:leading-[1.05]"
+          style={{ animationDelay: '0.05s' }}
+        >
           Launch and run your{' '}
           <span className="serif-italic text-amber-700">co-working space</span>
-          <br />
-          — without the chaos.
+          <br className="hidden sm:block" />
+          {' '}— without the chaos.
         </h1>
 
-        <p className="fade-up mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-slate-500" style={{ animationDelay: '0.1s' }}>
+        <p
+          className="fade-up mx-auto mb-8 max-w-2xl text-base leading-relaxed text-slate-500 sm:mb-10 sm:text-lg"
+          style={{ animationDelay: '0.1s' }}
+        >
           AltSpaceCW gives operators a complete platform to manage bookings, track payments, monitor floor occupancy, and delight their members — all from one dashboard.
         </p>
 
-        <div className="fade-up flex flex-wrap items-center justify-center gap-4" style={{ animationDelay: '0.15s' }}>
+        <div
+          className="fade-up flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4"
+          style={{ animationDelay: '0.15s' }}
+        >
           <Link
             to="/contact"
             className="rounded-full bg-slate-900 px-7 py-3.5 font-semibold text-white transition-colors hover:bg-slate-800"
@@ -79,7 +88,10 @@ export default function LandingPage() {
         </div>
 
         {/* Tagline strip */}
-        <div className="fade-up mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-400" style={{ animationDelay: '0.2s' }}>
+        <div
+          className="fade-up mt-8 flex flex-wrap items-center justify-center gap-4 text-sm text-slate-400 sm:mt-12 sm:gap-6"
+          style={{ animationDelay: '0.2s' }}
+        >
           {['No long-term contracts', 'Set up in a day', 'Built for PH operators'].map(t => (
             <span key={t} className="flex items-center gap-1.5">
               <Icon name="Check" size={13} className="text-emerald-500" strokeWidth={2.5} />
@@ -90,16 +102,16 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Features ────────────────────────────────────────────────── */}
-      <section id="features" className="mx-auto max-w-6xl px-6 py-24">
-        <div className="mb-14 text-center">
+      <section id="features" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 md:py-24">
+        <div className="mb-8 text-center md:mb-14">
           <div className="mb-3 text-sm font-semibold uppercase tracking-widest text-amber-500">Features</div>
-          <h2 className="font-serif text-5xl text-slate-900">Everything your space needs.</h2>
+          <h2 className="font-serif text-3xl text-slate-900 sm:text-4xl md:text-5xl">Everything your space needs.</h2>
           <p className="mx-auto mt-4 max-w-lg text-slate-500">
             From first booking to confirmed payment — AltSpaceCW handles the operational layer so you can focus on your members.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 sm:gap-5">
           {[
             {
               icon: 'LayoutGrid',
@@ -138,7 +150,7 @@ export default function LandingPage() {
               accent: 'bg-slate-100 text-slate-700',
             },
           ].map(({ icon, title, body, accent }) => (
-            <div key={title} className="rounded-3xl border border-slate-200 bg-white p-7 shadow-soft">
+            <div key={title} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft sm:p-7">
               <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-2xl ${accent}`}>
                 <Icon name={icon} size={22} strokeWidth={1.75} />
               </div>
@@ -150,23 +162,23 @@ export default function LandingPage() {
       </section>
 
       {/* ─── How it works (operator journey) ────────────────────────── */}
-      <section id="how-it-works" className="border-y border-slate-200 bg-white py-24">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="mb-14 text-center">
+      <section id="how-it-works" className="border-y border-slate-200 bg-white py-14 md:py-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mb-8 text-center md:mb-14">
             <div className="mb-3 text-sm font-semibold uppercase tracking-widest text-amber-500">Operator journey</div>
-            <h2 className="font-serif text-5xl text-slate-900">
+            <h2 className="font-serif text-3xl text-slate-900 sm:text-4xl md:text-5xl">
               Up and running in <span className="serif-italic">one afternoon</span>.
             </h2>
           </div>
 
-          <div className="relative grid grid-cols-1 gap-6 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-4">
             {[
-              { step: '01', icon: 'Building2',  title: 'Set up your space',      body: 'Add your floor layout, desk types, zones, and pricing. Publish your booking portal with your own workspace slug.' },
-              { step: '02', icon: 'UserPlus',   title: 'Invite your members',     body: 'Create client and admin accounts directly from the console. They log in instantly — no email verification loops.' },
-              { step: '03', icon: 'Calendar',   title: 'Bookings come in',        body: 'Members browse your live floor, pick times, and reserve. You see everything on your operator dashboard in real time.' },
-              { step: '04', icon: 'CheckCircle', title: 'Confirm and collect',   body: 'Review incoming payments, confirm bookings, and track daily revenue — all from the Operations tab.' },
+              { step: '01', icon: 'Building2',   title: 'Set up your space',    body: 'Add your floor layout, desk types, zones, and pricing. Publish your booking portal with your own workspace slug.' },
+              { step: '02', icon: 'UserPlus',    title: 'Invite your members',  body: 'Create client and admin accounts directly from the console. They log in instantly — no email verification loops.' },
+              { step: '03', icon: 'Calendar',    title: 'Bookings come in',     body: 'Members browse your live floor, pick times, and reserve. You see everything on your operator dashboard in real time.' },
+              { step: '04', icon: 'CheckCircle', title: 'Confirm and collect',  body: 'Review incoming payments, confirm bookings, and track daily revenue — all from the Operations tab.' },
             ].map(({ step, icon, title, body }) => (
-              <div key={step} className="rounded-3xl border border-slate-200 bg-[#F6F4EF] p-7">
+              <div key={step} className="rounded-3xl border border-slate-200 bg-[#F6F4EF] p-6 sm:p-7">
                 <div className="mb-5 flex items-center justify-between">
                   <span className="font-serif text-6xl leading-none text-slate-200">{step}</span>
                   <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 text-amber-400">
@@ -182,20 +194,20 @@ export default function LandingPage() {
       </section>
 
       {/* ─── SaaS Pricing ────────────────────────────────────────────── */}
-      <section id="pricing" className="mx-auto max-w-6xl px-6 py-24">
-        <div className="mb-14 text-center">
+      <section id="pricing" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 md:py-24">
+        <div className="mb-8 text-center md:mb-14">
           <div className="mb-3 text-sm font-semibold uppercase tracking-widest text-amber-500">Pricing</div>
-          <h2 className="font-serif text-5xl text-slate-900">Grow at your own pace.</h2>
+          <h2 className="font-serif text-3xl text-slate-900 sm:text-4xl md:text-5xl">Grow at your own pace.</h2>
           <p className="mx-auto mt-4 max-w-md text-slate-500">
             No setup fees. No lock-in. Start free and upgrade as your space scales.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:gap-6">
           {/* Starter */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-soft">
+          <div className="rounded-3xl border border-slate-200 bg-white p-7 shadow-soft sm:p-8">
             <div className="mb-1 text-sm font-semibold uppercase tracking-widest text-slate-400">Starter</div>
-            <div className="mb-1 font-serif text-5xl text-slate-900">₱1,200</div>
+            <div className="mb-1 font-serif text-4xl text-slate-900 md:text-5xl">₱1,200</div>
             <div className="mb-6 text-sm text-slate-400">per month · 1 site</div>
             <ul className="mb-8 space-y-3 text-sm text-slate-600">
               {[
@@ -221,12 +233,12 @@ export default function LandingPage() {
           </div>
 
           {/* Growth — popular */}
-          <div className="relative rounded-3xl border-2 border-amber-400 bg-white p-8 shadow-soft-lg">
+          <div className="relative rounded-3xl border-2 border-amber-400 bg-white p-7 shadow-soft-lg sm:p-8">
             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
               <span className="rounded-full bg-amber-500 px-4 py-1 text-xs font-bold text-white">Most popular</span>
             </div>
             <div className="mb-1 text-sm font-semibold uppercase tracking-widest text-amber-500">Growth</div>
-            <div className="mb-1 font-serif text-5xl text-slate-900">₱2,300</div>
+            <div className="mb-1 font-serif text-4xl text-slate-900 md:text-5xl">₱2,300</div>
             <div className="mb-6 text-sm text-slate-400">per month · up to 3 sites</div>
             <ul className="mb-8 space-y-3 text-sm text-slate-600">
               {[
@@ -252,9 +264,9 @@ export default function LandingPage() {
           </div>
 
           {/* Enterprise */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-soft">
+          <div className="rounded-3xl border border-slate-200 bg-white p-7 shadow-soft sm:col-span-2 sm:p-8 md:col-span-1">
             <div className="mb-1 text-sm font-semibold uppercase tracking-widest text-slate-400">Enterprise</div>
-            <div className="mb-1 font-serif text-5xl text-slate-900">Custom</div>
+            <div className="mb-1 font-serif text-4xl text-slate-900 md:text-5xl">Custom</div>
             <div className="mb-6 text-sm text-slate-400">unlimited sites · white-label</div>
             <ul className="mb-8 space-y-3 text-sm text-slate-600">
               {[
@@ -282,16 +294,16 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Final CTA ───────────────────────────────────────────────── */}
-      <section className="bg-slate-900 py-20">
-        <div className="mx-auto max-w-3xl px-6 text-center">
-          <h2 className="mb-4 font-serif text-5xl leading-tight text-white">
+      <section className="bg-slate-900 py-14 md:py-20">
+        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
+          <h2 className="mb-4 font-serif text-3xl leading-tight text-white sm:text-4xl md:text-5xl">
             Ready to run your space{' '}
             <span className="serif-italic text-amber-300">the right way?</span>
           </h2>
-          <p className="mb-8 text-lg text-white/60">
+          <p className="mb-8 text-base text-white/60 sm:text-lg">
             Join the operators who've moved their entire booking workflow into AltSpaceCW.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-4">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
             <Link
               to="/contact"
               className="rounded-full bg-amber-500 px-8 py-3.5 font-semibold text-white transition-colors hover:bg-amber-400"
@@ -310,7 +322,7 @@ export default function LandingPage() {
 
       {/* ─── Footer ──────────────────────────────────────────────────── */}
       <footer className="border-t border-slate-200 bg-[#F6F4EF]">
-        <div className="mx-auto max-w-6xl px-6 py-12">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
           <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="flex items-center gap-3">
