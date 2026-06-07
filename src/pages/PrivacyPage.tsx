@@ -6,7 +6,7 @@ export default function PrivacyPage() {
     <div className="min-h-screen bg-[#F6F4EF]">
       {/* ─── Nav ─────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-[#F6F4EF]/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-4">
           <Link to="/" className="flex items-center gap-3">
             <Logo />
             <div className="text-left leading-none">
@@ -34,7 +34,7 @@ export default function PrivacyPage() {
             </Link>
             <Link
               to="/login"
-              className="rounded-full bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-400 transition-colors"
+              className="hidden sm:inline-block rounded-full bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-400 transition-colors"
             >
               Get a demo
             </Link>
@@ -43,9 +43,9 @@ export default function PrivacyPage() {
       </header>
 
       {/* ─── Content ─────────────────────────────────────────────────── */}
-      <main className="mx-auto max-w-3xl px-6 py-20">
-        <div className="fade-up mb-12">
-          <h1 className="font-serif text-6xl leading-tight text-slate-900">Privacy Policy</h1>
+      <main className="mx-auto max-w-3xl px-4 sm:px-6 py-12 sm:py-20">
+        <div className="fade-up mb-10 sm:mb-12">
+          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl leading-tight text-slate-900">Privacy Policy</h1>
           <p className="mt-4 text-sm text-slate-400">Last updated: May 2025</p>
           <p className="mt-6 text-base leading-relaxed text-slate-600">
             AltSpaceCW is operated by HNSCorpPH. We're committed to protecting your personal information and being transparent about what we collect and why. This policy explains our practices in plain language.
@@ -177,7 +177,7 @@ export default function PrivacyPage() {
 
       {/* ─── Footer ──────────────────────────────────────────────────── */}
       <footer className="border-t border-slate-200 bg-[#F6F4EF]">
-        <div className="mx-auto max-w-6xl px-6 py-12">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-12">
           <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3">

@@ -150,7 +150,7 @@ export default function ConsolePage() {
     <div className="min-h-screen bg-slate-950 text-white">
 
       {/* Header */}
-      <header className="border-b border-white/10 px-8 py-4">
+      <header className="border-b border-white/10 px-4 sm:px-8 py-4">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <div className="flex items-center gap-3">
             <Logo />
@@ -169,7 +169,7 @@ export default function ConsolePage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-6xl px-8 py-8">
+      <div className="mx-auto max-w-6xl px-4 sm:px-8 py-6 sm:py-8">
 
         {/* Tabs */}
         <div className="mb-8 flex gap-1 rounded-full border border-white/10 bg-white/5 p-1 w-fit">
@@ -190,7 +190,7 @@ export default function ConsolePage() {
         {tab === 'tenants' && (
           <>
             {/* Stats */}
-            <div className="mb-6 grid grid-cols-3 gap-4">
+            <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
                 { label: 'Total',     value: tenants.length, color: 'text-white' },
                 { label: 'Active',    value: active,         color: 'text-emerald-400' },
@@ -215,7 +215,7 @@ export default function ConsolePage() {
               </button>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-white/10">
+            <div className="overflow-x-auto rounded-2xl border border-white/10">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/10 bg-white/5">
@@ -283,7 +283,7 @@ export default function ConsolePage() {
               </button>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-white/10">
+            <div className="overflow-x-auto rounded-2xl border border-white/10">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/10 bg-white/5">
