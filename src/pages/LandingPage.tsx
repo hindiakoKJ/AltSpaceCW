@@ -207,7 +207,7 @@ export default function LandingPage() {
           {/* Starter */}
           <div className="rounded-3xl border border-slate-200 bg-white p-7 shadow-soft sm:p-8">
             <div className="mb-1 text-sm font-semibold uppercase tracking-widest text-slate-400">Starter</div>
-            <div className="mb-1 font-serif text-4xl text-slate-900 md:text-5xl">₱1,200</div>
+            <div className="mb-1 font-serif text-4xl text-slate-900 md:text-5xl">₱500</div>
             <div className="mb-6 text-sm text-slate-400">per month · 1 site</div>
             <ul className="mb-8 space-y-3 text-sm text-slate-600">
               {[
