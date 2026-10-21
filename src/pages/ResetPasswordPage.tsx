@@ -25,7 +25,7 @@ export default function ResetPasswordPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (password.length < 6)    { setError('Password must be at least 6 characters.'); return }
+    if (password.length < 8)    { setError('Password must be at least 8 characters.'); return }
     if (password !== confirm)    { setError('Passwords do not match.'); return }
     setLoading(true)
     const { error } = await supabase.auth.updateUser({ password })
@@ -81,7 +81,7 @@ export default function ResetPasswordPage() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
                   placeholder="••••••••"
                   className="mt-1.5 w-full rounded-xl border border-slate-200 bg-stone-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white"
                 />

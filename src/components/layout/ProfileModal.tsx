@@ -42,7 +42,7 @@ export function ProfileModal({ onClose }: Props) {
   const [pwMsg,      setPwMsg]      = useState<{ ok: boolean; text: string } | null>(null)
 
   async function savePassword() {
-    if (newPw.length < 6)        { setPwMsg({ ok: false, text: 'Password must be at least 6 characters.' }); return }
+    if (newPw.length < 8)        { setPwMsg({ ok: false, text: 'Password must be at least 8 characters.' }); return }
     if (newPw !== confirmPw)     { setPwMsg({ ok: false, text: 'Passwords do not match.' }); return }
     setPwSaving(true)
     setPwMsg(null)
@@ -140,7 +140,7 @@ export function ProfileModal({ onClose }: Props) {
                     type={showPw ? 'text' : 'password'}
                     value={newPw}
                     onChange={e => { setNewPw(e.target.value); setPwMsg(null) }}
-                    placeholder="Min. 6 characters"
+                    placeholder="Min. 8 characters"
                     className="w-full rounded-xl border border-slate-200 bg-[#F6F4EF] px-4 py-2.5 pr-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 focus:outline-none transition"
                   />
                   <button

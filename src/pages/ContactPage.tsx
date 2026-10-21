@@ -1,8 +1,37 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Logo } from '../components/layout/Logo'
 import { Icon } from '../components/ui/Icon'
+import { supabase } from '../lib/supabase'
+
+const INPUT = 'w-full rounded-xl border border-slate-200 bg-[#F6F4EF] px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20'
 
 export default function ContactPage() {
+  const [openedAt] = useState(() => Date.now())
+  const [form,    setForm]    = useState({ name: '', email: '', company: '', message: '', website: '' })
+  const [sending, setSending] = useState(false)
+  const [sent,    setSent]    = useState(false)
+  const [error,   setError]   = useState('')
+
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm(f => ({ ...f, [k]: e.target.value }))
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    if (form.message.trim().length < 10) { setError('Please tell us a little more (at least 10 characters).'); return }
+    setSending(true)
+    const { data, error: fnError } = await supabase.functions.invoke('contact-message', {
+      body: { ...form, elapsed_ms: Date.now() - openedAt },
+    })
+    setSending(false)
+    if (fnError || (data as { error?: string } | null)?.error) {
+      setError((data as { error?: string } | null)?.error ?? 'Your message could not be sent. Please email us at hnscorpph@gmail.com.')
+      return
+    }
+    setSent(true)
+  }
+
   return (
     <div className="min-h-screen bg-[#F6F4EF]">
       {/* ─── Nav ─────────────────────────────────────────────────────── */}
@@ -33,12 +62,12 @@ export default function ContactPage() {
             >
               Sign in
             </Link>
-            <Link
-              to="/login"
+            <a
+              href="#message"
               className="hidden sm:inline-block rounded-full bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-amber-400 transition-colors"
             >
               Get a demo
-            </Link>
+            </a>
           </div>
         </div>
       </header>
@@ -62,52 +91,63 @@ export default function ContactPage() {
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
 
           {/* Left — Contact form */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-soft">
+          <div id="message" className="scroll-mt-24 rounded-3xl border border-slate-200 bg-white p-6 shadow-soft sm:p-8">
             <h2 className="mb-6 font-serif text-2xl text-slate-900">Send us a message</h2>
-            <form className="space-y-5" onSubmit={e => e.preventDefault()}>
+            {sent ? (
+              <div className="rounded-2xl bg-emerald-50 px-5 py-6 text-sm leading-relaxed text-emerald-800">
+                <div className="mb-1 font-semibold">Thanks, {form.name.split(' ')[0] || 'there'} — message received.</div>
+                We'll reply to {form.email} within one business day.
+              </div>
+            ) : (
+            <form className="space-y-5" onSubmit={handleSubmit}>
+              {/* Hidden from people; bots fill it in */}
+              <input type="text" name="website" value={form.website} onChange={set('website')}
+                tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
+
               <div>
                 <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-slate-700">
                   Full name
                 </label>
-                <input
-                  id="name"
-                  type="text"
-                  placeholder="Juan dela Cruz"
-                  className="w-full rounded-xl border border-slate-200 bg-[#F6F4EF] px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
-                />
+                <input id="name" type="text" required maxLength={100} value={form.name} onChange={set('name')}
+                  placeholder="Juan dela Cruz" className={INPUT} />
               </div>
 
               <div>
                 <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-700">
                   Email address
                 </label>
-                <input
-                  id="email"
-                  type="email"
-                  placeholder="juan@example.com"
-                  className="w-full rounded-xl border border-slate-200 bg-[#F6F4EF] px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
-                />
+                <input id="email" type="email" required maxLength={200} value={form.email} onChange={set('email')}
+                  placeholder="juan@example.com" className={INPUT} />
               </div>
 
               <div>
-                <label htmlFor="message" className="mb-1.5 block text-sm font-medium text-slate-700">
+                <label htmlFor="company" className="mb-1.5 block text-sm font-medium text-slate-700">
+                  Co-working space name <span className="font-normal text-slate-400">(optional)</span>
+                </label>
+                <input id="company" type="text" maxLength={150} value={form.company} onChange={set('company')}
+                  placeholder="e.g. Naga Hub Co-working" className={INPUT} />
+              </div>
+
+              <div>
+                <label htmlFor="message-body" className="mb-1.5 block text-sm font-medium text-slate-700">
                   Message
                 </label>
-                <textarea
-                  id="message"
-                  rows={5}
-                  placeholder="Tell us how we can help..."
-                  className="w-full resize-none rounded-xl border border-slate-200 bg-[#F6F4EF] px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
-                />
+                <textarea id="message-body" rows={5} required maxLength={4000} value={form.message} onChange={set('message')}
+                  placeholder="How many desks and rooms do you have? What would you like to see in a demo?"
+                  className={`${INPUT} resize-none`} />
               </div>
+
+              {error && <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600">{error}</div>}
 
               <button
                 type="submit"
-                className="w-full rounded-full bg-slate-900 py-3.5 font-semibold text-white hover:bg-slate-800 transition-colors"
+                disabled={sending}
+                className="w-full rounded-full bg-slate-900 py-3.5 font-semibold text-white hover:bg-slate-800 transition-colors disabled:opacity-50"
               >
-                Send message
+                {sending ? 'Sending…' : 'Send message'}
               </button>
             </form>
+            )}
           </div>
 
           {/* Right — Contact info */}
@@ -160,18 +200,18 @@ export default function ContactPage() {
               </div>
             </div>
 
-            {/* Book a tour CTA card */}
+            {/* Demo CTA card */}
             <div className="rounded-3xl bg-amber-500 p-8 shadow-soft-lg">
-              <div className="mb-2 font-serif text-2xl text-white">Book a tour</div>
+              <div className="mb-2 font-serif text-2xl text-white">Book a demo</div>
               <p className="mb-6 text-sm leading-relaxed text-amber-100">
-                See the space in person before you commit. Tours are free and take about 20 minutes — we'll show you everything.
+                See your members' booking page and your admin dashboard in a free 20-minute walkthrough. Tell us a little about your space and we'll set a time.
               </p>
-              <Link
-                to="/login"
+              <a
+                href="#message"
                 className="inline-block rounded-full bg-white px-6 py-3 text-sm font-semibold text-amber-600 hover:bg-amber-50 transition-colors"
               >
-                Schedule a tour →
-              </Link>
+                Request a demo →
+              </a>
             </div>
           </div>
         </div>

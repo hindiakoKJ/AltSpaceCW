@@ -1,11 +1,12 @@
 -- Demo seed data for AltSpaceCW
--- Run this in the Supabase SQL Editor for project ewvxsyixfiyisdtvnhwg
+-- Run this in the Supabase SQL Editor of a DEV/TEST project only.
 --
 -- Creates:
 --   • tenant: slug=demo, name="Demo Workspace"
 --   • admin@demo.com  (role=admin,  tenant=demo)
 --   • client@demo.com (role=client, tenant=demo)
---   Password for both: Admin1234!
+--   Password for both: replace CHANGE-ME-BEFORE-RUNNING below with your own strong password.
+--   This repo is public — never commit a real password here.
 
 -- ── 1. Create demo tenant ────────────────────────────────────────────────────
 INSERT INTO public.tenants (name, slug, status, admin_email)
@@ -39,7 +40,7 @@ VALUES (
   'authenticated',
   'authenticated',
   'admin@demo.com',
-  crypt('Admin1234!', gen_salt('bf')),
+  crypt('CHANGE-ME-BEFORE-RUNNING', gen_salt('bf')),
   NOW(),   -- email already confirmed
   '{"provider":"email","providers":["email"]}',
   '{"full_name":"Demo Admin"}',
@@ -73,7 +74,7 @@ VALUES (
   'authenticated',
   'authenticated',
   'client@demo.com',
-  crypt('Admin1234!', gen_salt('bf')),
+  crypt('CHANGE-ME-BEFORE-RUNNING', gen_salt('bf')),
   NOW(),   -- email already confirmed
   '{"provider":"email","providers":["email"]}',
   '{"full_name":"Demo Client"}',

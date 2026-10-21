@@ -559,7 +559,8 @@ function SpaceInventorySection() {
         ...s, ...spaceData, capacity: capacity ?? undefined,
       }))
     } else {
-      const newId = `${form.type.toUpperCase().slice(0, 2)}-${String(Date.now()).slice(-4)}`
+      // Space ids are unique across all workspaces, so use a random suffix
+      const newId = `${form.type.toUpperCase().slice(0, 2)}-${crypto.randomUUID().slice(0, 8)}`
       const { error } = await sb.from('spaces').insert({ id: newId, sort_order: spaces.length, ...spaceData })
       if (error) { setSaveErr(error.message); setSaving(false); return }
       setSpaces(ss => [...ss, { id: newId, ...spaceData, capacity: capacity ?? undefined }])
@@ -1474,8 +1475,8 @@ function MembersSection() {
       setFormError('All fields are required.')
       return
     }
-    if (form.password.length < 6) {
-      setFormError('Password must be at least 6 characters.')
+    if (form.password.length < 8) {
+      setFormError('Password must be at least 8 characters.')
       return
     }
 
@@ -1689,7 +1690,7 @@ function MembersSection() {
                   <TextInput
                     value={form.password}
                     onChange={v => setForm(f => ({ ...f, password: v }))}
-                    placeholder="Min. 6 characters"
+                    placeholder="Min. 8 characters"
                   />
                 </FormField>
 

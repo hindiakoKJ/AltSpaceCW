@@ -92,8 +92,8 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'email, password, and full_name are required' }, 400)
     }
 
-    if (password.length < 6) {
-      return json({ error: 'Password must be at least 6 characters' }, 400)
+    if (password.length < 8) {
+      return json({ error: 'Password must be at least 8 characters' }, 400)
     }
 
     // Determine effective role and tenant_id based on caller
@@ -142,13 +142,13 @@ Deno.serve(async (req: Request) => {
     }
 
     if (updateError) {
-      console.error('Profile update failed:', updateError)
+      console.error('Profile update failed:', updateError.code)
+      return json({ error: 'The account was created but its workspace or role could not be set. Assign it from the Console.' }, 500)
     }
 
     return json({ id: userId, email: newUser.user.email })
 
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Internal server error'
-    return json({ error: message }, 500)
+  } catch {
+    return json({ error: 'Internal server error' }, 500)
   }
 })

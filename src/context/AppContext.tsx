@@ -54,7 +54,7 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
 
   const [view,                setView]                = useState<ViewType>(initialView)
   const [userRole,            setUserRole]            = useState<UserRole>((profile?.role as UserRole) ?? 'client') // internal only, not exposed in context
-  const [spaces,              setSpaces]              = useState<Space[]>(ALL_SPACES)
+  const [spaces,              setSpaces]              = useState<Space[]>([])
   const [occupancy,           setOccupancy]           = useState<OccupancyMap>({})
   const [myBookings,          setMyBookings]          = useState<Booking[]>([])
   const [toast,               setToast]               = useState<ToastState | null>(null)
@@ -99,7 +99,7 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
       .eq('is_active', true)
       .order('sort_order')
       .then(({ data }: { data: DbSpace[] | null }) => {
-        if (data && data.length > 0) setSpaces(data.map(toAppSpace))
+        if (data) setSpaces(data.map(toAppSpace))
       })
   }, [tenant?.id])
 
@@ -162,45 +162,39 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
       setMyBookings((myData as (DbBooking & { space?: DbSpace })[]).map(toAppBooking))
     }
 
-    // Occupancy: only fetch what's needed — no user_id exposed to client
-    const [{ data: allData }, { data: maintData }] = await Promise.all([
-      sb.from('bookings')
-        .select('space_id, date, start_hour, end_hour')
-        .eq('tenant_id', tenantId)
-        .neq('status', 'cancelled')
-        .neq('payment_status', 'expired'),
+    // Occupancy for the whole workspace. Members can only read their own booking
+    // rows, so the database hands out the busy slots (no names, no prices) via RPC.
+    type Slot = { space_id: string; date: string; start_hour: number; end_hour: number; mine?: boolean }
+    const [{ data: rpcData, error: rpcError }, { data: maintData }] = await Promise.all([
+      sb.rpc('tenant_occupancy'),
       sb.from('maintenance_slots')
         .select('space_id, date')
         .eq('tenant_id', tenantId),
     ])
 
-    if (allData || maintData) {
-      const occ: OccupancyMap = {}
-
-      // Own bookings (user_id match) — fetch separately to preserve 'mine' flag
-      if (allData) {
-        for (const b of allData as { space_id: string; date: string; start_hour: number; end_hour: number }[]) {
-          if (!occ[b.date]) occ[b.date] = {}
-          if (!occ[b.date][b.space_id]) {
-            occ[b.date][b.space_id] = { start: b.start_hour, end: b.end_hour }
-          }
-        }
-      }
-
-      // Mark own bookings with 'mine' flag (separate query scoped to user)
-      const { data: mySlots } = await sb
-        .from('bookings')
-        .select('space_id, date, start_hour, end_hour')
+    let slots: Slot[] | null = rpcData as Slot[] | null
+    if (rpcError) {
+      // Database not yet updated with tenant_occupancy — fall back to the direct query
+      const { data: allData } = await sb.from('bookings')
+        .select('space_id, date, start_hour, end_hour, user_id')
         .eq('tenant_id', tenantId)
-        .eq('user_id', userId)
         .neq('status', 'cancelled')
         .neq('payment_status', 'expired')
+      slots = ((allData ?? []) as (Slot & { user_id: string })[]).map(b => ({ ...b, mine: b.user_id === userId }))
+    }
 
-      if (mySlots) {
-        for (const b of mySlots as { space_id: string; date: string; start_hour: number; end_hour: number }[]) {
-          if (occ[b.date]?.[b.space_id]) {
-            occ[b.date][b.space_id] = { ...occ[b.date][b.space_id], mine: true as const }
-          }
+    if (slots || maintData) {
+      const occ: OccupancyMap = {}
+
+      for (const b of slots ?? []) {
+        if (!occ[b.date]) occ[b.date] = {}
+        const cur = occ[b.date][b.space_id]
+        if (!cur) {
+          occ[b.date][b.space_id] = b.mine
+            ? { start: b.start_hour, end: b.end_hour, mine: true as const }
+            : { start: b.start_hour, end: b.end_hour }
+        } else if (b.mine) {
+          occ[b.date][b.space_id] = { ...cur, mine: true as const }
         }
       }
 
@@ -272,7 +266,7 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
       status:          'upcoming',
       payment_status:  'pending',
       client_deadline: clientDeadline,
-    }).select('id').single()
+    }).select('id, price').single()
 
     if (error) {
       setMyBookings(bs => bs.filter(x => x.id !== tempId))
@@ -285,20 +279,14 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
       return
     }
 
-    const realId = (data as { id: string }).id
-    setMyBookings(bs => bs.map(x => x.id === tempId ? { ...x, id: realId } : x))
+    // The database sets the final price; show what it charged
+    const { id: realId, price: dbPrice } = data as { id: string; price: number }
+    setMyBookings(bs => bs.map(x => x.id === tempId ? { ...x, id: realId, price: Number(dbPrice) } : x))
 
-    // ── Email notification: booking created ──
-    if (profile?.email) {
-      supabase.functions.invoke('send-booking-email', {
-        body: {
-          type: 'booking_created',
-          to_email: profile.email,
-          to_name: profile.full_name ?? profile.email.split('@')[0],
-          booking: { id: realId, space_label: b.space.label, space_zone: b.space.zone, date: b.date, start: b.start, end: b.end, price: b.price },
-        },
-      }).catch(() => { /* email failure is non-fatal */ })
-    }
+    // ── Email notification: booking created (the function looks up the details itself) ──
+    supabase.functions.invoke('send-booking-email', {
+      body: { type: 'booking_created', booking_id: realId },
+    }).catch(() => { /* email failure is non-fatal */ })
   }
 
   async function markPaid(id: string) {
@@ -315,72 +303,19 @@ export function AppProvider({ children, initialView = 'book' }: { children: Reac
   }
 
   async function confirmPayment(id: string) {
-    await sb.from('bookings').update({ payment_status: 'confirmed' }).eq('id', id)
+    const { error } = await sb.from('bookings').update({ payment_status: 'confirmed' }).eq('id', id)
+    if (error) {
+      showToast({ kind: 'error', title: 'Could not confirm', body: (error as { message: string }).message })
+      return
+    }
     setMyBookings(bs => bs.map(b => b.id === id ? { ...b, payment_status: 'confirmed' as const } : b))
-
-    // Deduct 1 credit from the booking owner's active subscription
-    let bookingUserId: string | null = null
-    const foundBooking = myBookings.find(b => b.id === id)
-    if (foundBooking) {
-      // Only admin has access to myBookings of other users via admin view — try via DB
-      const { data: bRow } = await sb
-        .from('bookings')
-        .select('user_id')
-        .eq('id', id)
-        .maybeSingle()
-      bookingUserId = bRow?.user_id ?? null
-    } else {
-      const { data: bRow } = await sb
-        .from('bookings')
-        .select('user_id')
-        .eq('id', id)
-        .maybeSingle()
-      bookingUserId = bRow?.user_id ?? null
-    }
-
-    if (bookingUserId && tenant) {
-      const { data: sub } = await sb
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', bookingUserId)
-        .eq('tenant_id', tenant.id)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      if (sub) {
-        await sb.from('subscriptions')
-          .update({ credits_used: (sub.credits_used ?? 0) + 1 })
-          .eq('id', sub.id)
-        // If this is the current user's sub, reload
-        if (bookingUserId === user?.id) {
-          reloadSubscription()
-        }
-      }
-    }
-
+    // The database uses one plan credit and writes the audit entry on confirm
+    reloadSubscription()
     showToast({ kind: 'success', title: 'Payment confirmed!', body: 'Booking is fully reserved.' })
 
-    // ── Email notification: payment confirmed ──
-    if (bookingUserId) {
-      const { data: memberProfile } = await sb
-        .from('profiles')
-        .select('email, full_name')
-        .eq('id', bookingUserId)
-        .maybeSingle()
-      const confirmedBooking = myBookings.find(b => b.id === id)
-      if (memberProfile?.email && confirmedBooking) {
-        supabase.functions.invoke('send-booking-email', {
-          body: {
-            type: 'payment_confirmed',
-            to_email: memberProfile.email,
-            to_name: memberProfile.full_name ?? memberProfile.email.split('@')[0],
-            booking: { id, space_label: confirmedBooking.space.label, space_zone: confirmedBooking.space.zone, date: confirmedBooking.date, start: confirmedBooking.start, end: confirmedBooking.end, price: confirmedBooking.price },
-          },
-        }).catch(() => { /* email failure is non-fatal */ })
-      }
-    }
+    supabase.functions.invoke('send-booking-email', {
+      body: { type: 'payment_confirmed', booking_id: id },
+    }).catch(() => { /* email failure is non-fatal */ })
   }
 
   function cancelBooking(id: string) {

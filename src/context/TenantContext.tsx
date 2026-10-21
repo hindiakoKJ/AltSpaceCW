@@ -22,7 +22,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     if (!slug) { setLoading(false); return }
 
     sb.from('tenants')
-      .select('*')
+      .select('id, name, slug, status, created_at')
       .eq('slug', slug)
       .single()
       .then(({ data }: { data: Tenant | null }) => {

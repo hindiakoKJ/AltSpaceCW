@@ -622,19 +622,16 @@ export function AdminView() {
                 <div className="mt-3 flex gap-2">
                   <button
                     onClick={async () => {
-                      await sb.from('bookings').update({ payment_status: 'confirmed' }).eq('id', p.id)
-                      const { data: { user } } = await sb.auth.getUser()
-                      if (user && tenant) {
-                        await sb.from('audit_log').insert({
-                          tenant_id:   tenant.id,
-                          actor_id:    user.id,
-                          action:      'payment_confirmed',
-                          entity_type: 'booking',
-                          entity_id:   p.id,
-                          metadata:    { price: p.price, space: p.space?.label, date: p.date },
-                        })
+                      // The database writes the audit entry and uses a plan credit
+                      const { error } = await sb.from('bookings').update({ payment_status: 'confirmed' }).eq('id', p.id)
+                      if (error) {
+                        app.showToast({ kind: 'error', title: 'Could not confirm', body: error.message })
+                        return
                       }
                       setPendingPayments(ps => ps.filter(x => x.id !== p.id))
+                      sb.functions.invoke('send-booking-email', {
+                        body: { type: 'payment_confirmed', booking_id: p.id },
+                      }).catch(() => { /* email failure is non-fatal */ })
                     }}
                     className="flex-1 rounded-xl bg-slate-900 py-2 text-sm font-medium text-white hover:bg-slate-700"
                   >
@@ -642,17 +639,11 @@ export function AdminView() {
                   </button>
                   <button
                     onClick={async () => {
-                      await sb.from('bookings').update({ payment_status: 'expired' }).eq('id', p.id)
-                      const { data: { user } } = await sb.auth.getUser()
-                      if (user && tenant) {
-                        await sb.from('audit_log').insert({
-                          tenant_id:   tenant.id,
-                          actor_id:    user.id,
-                          action:      'payment_rejected',
-                          entity_type: 'booking',
-                          entity_id:   p.id,
-                          metadata:    { price: p.price, space: p.space?.label, date: p.date },
-                        })
+                      // The database writes the audit entry
+                      const { error } = await sb.from('bookings').update({ payment_status: 'expired' }).eq('id', p.id)
+                      if (error) {
+                        app.showToast({ kind: 'error', title: 'Could not reject', body: error.message })
+                        return
                       }
                       setPendingPayments(ps => ps.filter(x => x.id !== p.id))
                     }}

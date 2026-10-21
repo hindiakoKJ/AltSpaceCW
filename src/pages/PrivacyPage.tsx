@@ -46,66 +46,67 @@ export default function PrivacyPage() {
       <main className="mx-auto max-w-3xl px-4 sm:px-6 py-12 sm:py-20">
         <div className="fade-up mb-10 sm:mb-12">
           <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl leading-tight text-slate-900">Privacy Policy</h1>
-          <p className="mt-4 text-sm text-slate-400">Last updated: May 2025</p>
+          <p className="mt-4 text-sm text-slate-400">Last updated: October 20, 2026</p>
           <p className="mt-6 text-base leading-relaxed text-slate-600">
-            AltSpaceCW is operated by HNSCorpPH. We're committed to protecting your personal information and being transparent about what we collect and why. This policy explains our practices in plain language.
+            AltSpaceCW is a booking platform for co-working spaces, operated by HNSCorpPH (Naga City, Camarines Sur, Philippines). This policy explains, in plain language, what personal information the platform handles, why, and the rights you have under the Data Privacy Act of 2012 (Republic Act No. 10173).
+          </p>
+          <p className="mt-4 text-base leading-relaxed text-slate-600">
+            If you book through a co-working space that uses AltSpaceCW, that space decides how your booking information is used, and HNSCorpPH processes it on the space's behalf. For co-working operators who contact us or subscribe, HNSCorpPH is responsible for your information directly.
           </p>
         </div>
 
         <div className="space-y-12">
           {/* Section 1 */}
           <section>
-            <h2 className="mb-4 font-serif text-3xl text-slate-900">1. Information We Collect</h2>
+            <h2 className="mb-4 font-serif text-3xl text-slate-900">1. Information we collect</h2>
             <div className="space-y-3 text-base leading-relaxed text-slate-600">
-              <p>
-                We collect information you provide directly when you create an account or make a booking:
-              </p>
-              <ul className="ml-5 list-disc space-y-2 text-slate-600">
-                <li><span className="font-medium text-slate-800">Account information</span> — your full name and email address when you register.</li>
-                <li><span className="font-medium text-slate-800">Booking data</span> — the workspace, dates, times, and seat types you reserve.</li>
-                <li><span className="font-medium text-slate-800">Usage data</span> — pages visited, features used, and session timestamps to help us improve the platform.</li>
-                <li><span className="font-medium text-slate-800">Communications</span> — messages you send us through the contact form or support channels.</li>
+              <ul className="ml-5 list-disc space-y-2">
+                <li><span className="font-medium text-slate-800">Account information</span> — your name, email address, the workspace you belong to, and your role. Your password is stored only in scrambled (hashed) form by our sign-in provider; nobody at HNSCorpPH can see it.</li>
+                <li><span className="font-medium text-slate-800">Bookings</span> — the space, date, hours and amount of each booking, its payment status, and any membership plan credits your space assigns you.</li>
+                <li><span className="font-medium text-slate-800">Contact form messages</span> — your name, email, business name and message.</li>
+                <li><span className="font-medium text-slate-800">Error reports</span> — if the app crashes, technical details (browser, page and error) are sent to our error-monitoring service so we can fix it. We do not attach your name or email to these reports.</li>
               </ul>
               <p>
-                We do not collect payment card details directly. Payments are processed by our third-party payment provider, which operates under its own privacy and security policies.
+                We do not use advertising trackers or analytics cookies. Your browser keeps a sign-in token so you stay logged in; signing out removes it.
+              </p>
+              <p>
+                We do not collect card or bank details. You pay your co-working space directly (for example in cash, by bank transfer or e-wallet); AltSpaceCW only records whether a booking has been paid and confirmed.
               </p>
             </div>
           </section>
 
           {/* Section 2 */}
           <section>
-            <h2 className="mb-4 font-serif text-3xl text-slate-900">2. How We Use Your Information</h2>
+            <h2 className="mb-4 font-serif text-3xl text-slate-900">2. How we use it</h2>
             <div className="space-y-3 text-base leading-relaxed text-slate-600">
-              <p>We use the information we collect to:</p>
               <ul className="ml-5 list-disc space-y-2">
-                <li>Process and manage your workspace bookings.</li>
-                <li>Send booking confirmations, reminders, and status updates.</li>
-                <li>Respond to your support requests and inquiries.</li>
-                <li>Identify and fix bugs, improve platform reliability, and develop new features.</li>
-                <li>Comply with legal obligations where required.</li>
+                <li>To take and manage your bookings and prevent double-booking.</li>
+                <li>To email you when you book and when your payment is confirmed.</li>
+                <li>To let your co-working space's administrators manage members, bookings and payments.</li>
+                <li>To answer messages sent through our contact form.</li>
+                <li>To keep the platform secure and fix errors.</li>
+                <li>To meet legal obligations where required.</li>
               </ul>
-              <p>
-                We will never use your information for advertising or sell access to your data to third-party marketers.
-              </p>
+              <p>We never sell your personal information and never use it for advertising.</p>
             </div>
           </section>
 
           {/* Section 3 */}
           <section>
-            <h2 className="mb-4 font-serif text-3xl text-slate-900">3. Data Sharing</h2>
+            <h2 className="mb-4 font-serif text-3xl text-slate-900">3. Who can see it</h2>
             <div className="space-y-3 text-base leading-relaxed text-slate-600">
-              <p>
-                <span className="font-semibold text-slate-800">We do not sell your personal data.</span> We share your information only in the following limited circumstances:
-              </p>
               <ul className="ml-5 list-disc space-y-2">
                 <li>
-                  <span className="font-medium text-slate-800">Workspace operators (tenants)</span> — the co-working space you book with receives your name, email, and booking details so they can manage your visit and confirm your reservation.
+                  <span className="font-medium text-slate-800">Your co-working space's administrators</span> — your name, email, bookings, payment status and plan credits. Each space can only see its own members; spaces cannot see each other's data.
                 </li>
                 <li>
-                  <span className="font-medium text-slate-800">Service providers</span> — trusted vendors who help us operate the platform (hosting, email delivery, payment processing). They are bound by confidentiality agreements and may only use your data to perform services on our behalf.
+                  <span className="font-medium text-slate-800">HNSCorpPH</span> — only when needed for support, security, or because the law requires it.
                 </li>
                 <li>
-                  <span className="font-medium text-slate-800">Legal requirements</span> — if we are required to disclose information by law, court order, or government authority.
+                  <span className="font-medium text-slate-800">Service providers we use to run the platform</span> — Supabase (database, sign-in and file storage), Vercel (website hosting), Resend (sending emails) and Sentry (error reports). Some of them store data on servers outside the Philippines. They may only use your information to provide their service to us.
+                </li>
+                <li>
+                  <span className="font-medium text-slate-800">Authorities</span> — if we are legally required to disclose information by law, court order or a government authority.
                 </li>
               </ul>
             </div>
@@ -113,62 +114,62 @@ export default function PrivacyPage() {
 
           {/* Section 4 */}
           <section>
-            <h2 className="mb-4 font-serif text-3xl text-slate-900">4. Data Retention</h2>
+            <h2 className="mb-4 font-serif text-3xl text-slate-900">4. How long we keep it</h2>
             <div className="space-y-3 text-base leading-relaxed text-slate-600">
-              <p>We retain your data for as long as it is needed to provide the service and meet our legal obligations:</p>
               <ul className="ml-5 list-disc space-y-2">
-                <li>
-                  <span className="font-medium text-slate-800">Booking records</span> are kept for <span className="font-medium text-slate-800">2 years</span> from the booking date for accounting and dispute-resolution purposes.
-                </li>
-                <li>
-                  <span className="font-medium text-slate-800">Account data</span> is retained until you request deletion of your account.
-                </li>
-                <li>
-                  <span className="font-medium text-slate-800">Usage logs</span> are anonymized and aggregated after 90 days.
-                </li>
+                <li>Your account and booking history are kept while your account is active, so you and your co-working space have a record of your bookings.</li>
+                <li>When you ask us to delete your account, we delete or anonymize your personal information within 30 days. Booking records your co-working space must keep for tax or accounting purposes are kept only for as long as the law requires.</li>
+                <li>Contact form messages are kept only as long as we need them to answer you and follow up.</li>
+                <li>Error reports are deleted automatically by our error-monitoring provider after its standard retention period.</li>
               </ul>
-              <p>
-                After the applicable retention period, your data is securely deleted or anonymized so it can no longer be associated with you.
-              </p>
             </div>
           </section>
 
           {/* Section 5 */}
           <section>
-            <h2 className="mb-4 font-serif text-3xl text-slate-900">5. Your Rights</h2>
+            <h2 className="mb-4 font-serif text-3xl text-slate-900">5. How we protect it</h2>
             <div className="space-y-3 text-base leading-relaxed text-slate-600">
-              <p>You have the following rights regarding your personal data:</p>
-              <ul className="ml-5 list-disc space-y-2">
-                <li><span className="font-medium text-slate-800">Access</span> — request a copy of the data we hold about you.</li>
-                <li><span className="font-medium text-slate-800">Correction</span> — ask us to correct inaccurate or incomplete information.</li>
-                <li><span className="font-medium text-slate-800">Deletion</span> — request that we delete your account and associated personal data.</li>
-                <li><span className="font-medium text-slate-800">Portability</span> — receive your data in a structured, machine-readable format.</li>
-                <li><span className="font-medium text-slate-800">Objection</span> — object to certain uses of your data, including direct communications.</li>
-              </ul>
               <p>
-                To exercise any of these rights, please contact us at the email below. We will respond within 30 days.
+                All connections are encrypted (HTTPS). Each co-working space's data is separated at the database level, and what each person can see or change depends on their role. If a security incident affects your personal information, we will notify you and the National Privacy Commission as the law requires.
               </p>
             </div>
           </section>
 
           {/* Section 6 */}
           <section>
-            <h2 className="mb-4 font-serif text-3xl text-slate-900">6. Contact</h2>
+            <h2 className="mb-4 font-serif text-3xl text-slate-900">6. Your rights</h2>
             <div className="space-y-3 text-base leading-relaxed text-slate-600">
+              <p>Under the Data Privacy Act you have the right to:</p>
+              <ul className="ml-5 list-disc space-y-2">
+                <li>be informed about how your information is used;</li>
+                <li>access the information we hold about you;</li>
+                <li>have inaccurate information corrected;</li>
+                <li>object to processing, or have your information blocked or deleted;</li>
+                <li>receive your information in a portable format (you can download your booking history as a CSV file from your dashboard, and we can export the rest on request);</li>
+                <li>claim damages for unlawful processing, and file a complaint with the National Privacy Commission (privacy.gov.ph).</li>
+              </ul>
               <p>
-                If you have questions, concerns, or requests related to this Privacy Policy or how we handle your data, please reach out to our privacy team:
+                To use any of these rights, email us at the address below. We will respond within 30 days. If you book through a co-working space, you may also contact the space directly.
               </p>
+            </div>
+          </section>
+
+          {/* Section 7 */}
+          <section>
+            <h2 className="mb-4 font-serif text-3xl text-slate-900">7. Contact our Data Protection Officer</h2>
+            <div className="space-y-3 text-base leading-relaxed text-slate-600">
               <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
-                <div className="text-sm font-semibold text-slate-900">HNSCorpPH — Privacy Team</div>
+                <div className="text-sm font-semibold text-slate-900">Data Protection Officer — HNSCorpPH</div>
+                <div className="mt-1 text-sm text-slate-500">Naga City, Camarines Sur, Philippines</div>
                 <a
                   href="mailto:hnscorpph@gmail.com"
-                  className="mt-1 text-sm text-amber-600 hover:text-amber-500 transition-colors"
+                  className="mt-1 inline-block text-sm text-amber-600 hover:text-amber-500 transition-colors"
                 >
                   hnscorpph@gmail.com
                 </a>
               </div>
               <p className="text-sm text-slate-400">
-                We take all privacy concerns seriously and aim to resolve them promptly.
+                We will post any changes to this policy on this page and email account holders about significant changes.
               </p>
             </div>
           </section>

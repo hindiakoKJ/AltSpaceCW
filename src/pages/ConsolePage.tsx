@@ -96,8 +96,8 @@ export default function ConsolePage() {
       setCuError('Full name, email, and password are required.')
       return
     }
-    if (cuPassword.length < 6) {
-      setCuError('Password must be at least 6 characters.')
+    if (cuPassword.length < 8) {
+      setCuError('Password must be at least 8 characters.')
       return
     }
     setCuSaving(true)
@@ -421,7 +421,7 @@ export default function ConsolePage() {
                 />
               </div>
               <div>
-                <label className="text-[11px] font-medium uppercase tracking-wider text-white/40">Password <span className="normal-case text-white/20">(min 6 chars)</span></label>
+                <label className="text-[11px] font-medium uppercase tracking-wider text-white/40">Password <span className="normal-case text-white/20">(min 8 chars)</span></label>
                 <input
                   value={cuPassword}
                   onChange={e => setCuPassword(e.target.value)}

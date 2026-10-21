@@ -71,6 +71,13 @@ hr{border:none;border-top:1px solid #e2e8f0;margin:20px 0}
   setTimeout(() => { win.print() }, 350)
 }
 
+/** Quote a CSV cell; prefix ' on values a spreadsheet would run as a formula */
+function csvCell(v: string | number): string {
+  let s = String(v)
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`
+  return `"${s.replace(/"/g, '""')}"`
+}
+
 function exportCSV(bookings: Booking[]) {
   const headers = ['Date', 'Space', 'Zone', 'Type', 'Time Start', 'Time End', 'Hours', 'Charge (PHP)', 'Payment Status']
   const rows = bookings.map(b => [
@@ -84,7 +91,7 @@ function exportCSV(bookings: Booking[]) {
     b.price,
     b.payment_status,
   ])
-  const csv  = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\r\n')
+  const csv  = [headers, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
   const url  = URL.createObjectURL(blob)
   const a    = document.createElement('a')
