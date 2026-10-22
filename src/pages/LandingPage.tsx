@@ -212,8 +212,8 @@ export default function LandingPage() {
             <ul className="mb-8 space-y-3 text-sm text-slate-600">
               {[
                 '1 co-working location',
-                'Up to 50 customers',
-                '+₱100 per additional 20 customers',
+                'Up to 100 members',
+                '+₱100 per additional 20 members',
                 'Real-time booking & floor map',
                 'Payment confirmation flow',
                 'Client & admin accounts',
@@ -238,13 +238,13 @@ export default function LandingPage() {
               <span className="rounded-full bg-amber-500 px-4 py-1 text-xs font-bold text-white">Most popular</span>
             </div>
             <div className="mb-1 text-sm font-semibold uppercase tracking-widest text-amber-500">Growth</div>
-            <div className="mb-1 font-serif text-4xl text-slate-900 md:text-5xl">₱2,300</div>
+            <div className="mb-1 font-serif text-4xl text-slate-900 md:text-5xl">₱1,000</div>
             <div className="mb-6 text-sm text-slate-400">per month · up to 3 sites</div>
             <ul className="mb-8 space-y-3 text-sm text-slate-600">
               {[
                 'Up to 3 co-working locations',
-                'Up to 200 customers',
-                '+₱100 per additional 20 customers',
+                'Up to 300 members',
+                '+₱100 per additional 20 members',
                 'Everything in Starter',
                 'Occupancy analytics',
                 'Priority support',
