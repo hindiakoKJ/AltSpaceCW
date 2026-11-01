@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import type { Space, SpaceType, MembershipPlan, AmenityItem } from '../../types/app'
 import type { StudioProfile } from '../../types/app'
 import type { DbStudioSettings, DbSpace } from '../../types/database'
-import { ALL_SPACES } from '../../lib/mockData'
 import {
   DEFAULT_PROFILE, DEFAULT_PLANS, DEFAULT_AMENITIES,
   HOUR_OPTIONS, fmtHourOption,
@@ -496,7 +495,7 @@ function SpaceInventorySection() {
           id: d.id, label: d.label, type: d.type as SpaceType,
           zone: d.zone, price: Number(d.price), hourly: Number(d.hourly),
           capacity: d.capacity ?? undefined,
-        })) : [...ALL_SPACES])
+        })) : [])
         setLoading(false)
       })
   }, [tenant?.id])

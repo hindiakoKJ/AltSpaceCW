@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import type { Space } from '../../types/app'
+import type { Member, Space } from '../../types/app'
+import { formatDistanceToNowStrict } from 'date-fns'
 import { useApp } from '../../context/AppContext'
 import { useTenant } from '../../context/TenantContext'
-import { MEMBERS, TYPE_META } from '../../lib/mockData'
-import { TODAY, addDays, dateKey, fmtLongDate, fmtHourShort, parseKey } from '../../lib/dateHelpers'
+import { TYPE_META } from '../../lib/spaceTypes'
+import { TODAY, addDays, dateKey, fmtLongDate, fmtHourShort, fmtRange, parseKey } from '../../lib/dateHelpers'
 import { Icon } from '../ui/Icon'
 import { Avatar } from '../ui/Avatar'
 import { Pill } from '../ui/Pill'
@@ -54,9 +55,8 @@ function OccupancyCard({ pct, occupied, total }: { pct: number; occupied: number
 
 /* ── Metric: Revenue sparkline ────────────────────────────────────── */
 
-function RevenueCard({ amount, delta }: { amount: number; delta: number }) {
-  const points = [38, 44, 41, 56, 52, 63, 68, 72, 70]
-  const max    = Math.max(...points)
+function RevenueCard({ amount, delta, points }: { amount: number; delta: number | null; points: number[] }) {
+  const max    = Math.max(...points, 1)
 
   return (
     <div className="col-span-12 sm:col-span-5 md:col-span-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
@@ -65,11 +65,17 @@ function RevenueCard({ amount, delta }: { amount: number; delta: number }) {
         <span className="font-serif text-6xl leading-none text-slate-900">₱{amount.toLocaleString()}</span>
       </div>
       <div className="mt-2 flex items-center gap-2 text-sm">
-        <span className={`inline-flex items-center gap-1 rounded-full ${delta >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'} px-2 py-0.5 text-xs font-medium`}>
-          <Icon name={delta >= 0 ? 'TrendingUp' : 'TrendingDown'} size={12} />
-          {delta >= 0 ? '+' : ''}{delta}%
-        </span>
-        <span className="text-slate-500">vs. yesterday</span>
+        {delta === null ? (
+          <span className="text-slate-500">No bookings the day before</span>
+        ) : (
+          <>
+            <span className={`inline-flex items-center gap-1 rounded-full ${delta >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'} px-2 py-0.5 text-xs font-medium`}>
+              <Icon name={delta >= 0 ? 'TrendingUp' : 'TrendingDown'} size={12} />
+              {delta >= 0 ? '+' : ''}{delta}%
+            </span>
+            <span className="text-slate-500">vs. day before</span>
+          </>
+        )}
       </div>
       <svg viewBox="0 0 200 60" className="mt-4 w-full">
         <defs>
@@ -96,17 +102,18 @@ function RevenueCard({ amount, delta }: { amount: number; delta: number }) {
 
 /* ── Metric: Active members ───────────────────────────────────────── */
 
-function ActiveUsersCard({ users, count }: { users: (typeof MEMBERS[number] | undefined)[]; count: number }) {
+function ActiveUsersCard({ users, bookingCount }: { users: Member[]; bookingCount: number }) {
+  const count = users.length
   return (
     <div className="col-span-12 sm:col-span-4 md:col-span-3 rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
-      <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Active members</div>
+      <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Members booked</div>
       <div className="mt-3 flex items-baseline gap-2">
         <span className="font-serif text-6xl leading-none text-slate-900">{count}</span>
-        <span className="text-sm text-slate-500">checked in</span>
+        <span className="text-sm text-slate-500">{count === 1 ? 'member' : 'members'}</span>
       </div>
       <div className="mt-5 flex -space-x-2">
-        {users.filter(Boolean).slice(0, 5).map((u, i) => (
-          <Avatar key={i} member={u!} size={32} ring />
+        {users.slice(0, 5).map((u, i) => (
+          <Avatar key={i} member={u} size={32} ring />
         ))}
         {count > 5 && (
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-[11px] font-medium text-white ring-2 ring-white">
@@ -115,7 +122,7 @@ function ActiveUsersCard({ users, count }: { users: (typeof MEMBERS[number] | un
         )}
       </div>
       <div className="mt-4 text-xs text-slate-500">
-        <span className="font-medium text-slate-900">3 visitors</span> waiting at the front desk.
+        <span className="font-medium text-slate-900">{bookingCount} {bookingCount === 1 ? 'booking' : 'bookings'}</span> on this day.
       </div>
     </div>
   )
@@ -306,47 +313,74 @@ function InventoryTile({
 
 /* ── Activity feed ────────────────────────────────────────────────── */
 
-const WHEN_LABELS = ['2m ago','8m ago','14m ago','27m ago','41m ago','1h ago','1h ago','2h ago']
+type DayBooking = {
+  id: string
+  user_id: string
+  space_id: string
+  start_hour: number
+  end_hour: number
+  price: number
+  payment_status: string | null
+  created_at: string
+  user: { full_name: string | null; email: string } | null
+}
 
-function ActivityFeed({ day, spaces }: { day: Record<string, { memberIdx?: number; start?: number; end?: number; maintenance?: true }>; spaces: Space[] }) {
-  const entries = Object.entries(day)
-    .filter(([, s]) => !s.maintenance)
+const AVATAR_COLORS = [
+  'bg-amber-100 text-amber-900',  'bg-emerald-100 text-emerald-900', 'bg-sky-100 text-sky-900',
+  'bg-rose-100 text-rose-900',    'bg-violet-100 text-violet-900',   'bg-orange-100 text-orange-900',
+  'bg-teal-100 text-teal-900',    'bg-indigo-100 text-indigo-900',   'bg-pink-100 text-pink-900',
+]
+
+function toMember(userId: string, user: DayBooking['user']): Member {
+  const name  = user?.full_name || user?.email?.split('@')[0] || 'Member'
+  const parts = name.trim().split(/\s+/)
+  const avatar = (parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : name.slice(0, 2)).toUpperCase()
+  let hash = 0
+  for (const ch of userId) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0
+  return { name, avatar, color: AVATAR_COLORS[hash % AVATAR_COLORS.length], plan: '' }
+}
+
+function ActivityFeed({ bookings, spaces }: { bookings: DayBooking[]; spaces: Space[] }) {
+  const entries = [...bookings]
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .slice(0, 8)
-    .map(([spaceId, s], i) => ({
-      id: spaceId,
-      member: s.memberIdx !== undefined ? MEMBERS[s.memberIdx] : undefined,
-      space:  spaces.find(x => x.id === spaceId),
-      when:   WHEN_LABELS[i] ?? '2h ago',
-      action: i % 3 === 0 ? 'checked in to' : i % 3 === 1 ? 'booked' : 'swapped seat to',
+    .map(b => ({
+      id:     b.id,
+      member: toMember(b.user_id, b.user),
+      space:  spaces.find(x => x.id === b.space_id),
+      when:   formatDistanceToNowStrict(new Date(b.created_at), { addSuffix: true }),
+      hours:  fmtRange(b.start_hour, b.end_hour),
+      unpaid: b.payment_status === 'pending' || b.payment_status === 'awaiting_confirmation',
     }))
 
   return (
     <div className="col-span-12 lg:col-span-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Live activity</div>
-          <h3 className="mt-1 text-xl font-semibold text-slate-900">What just happened</h3>
-        </div>
-        <span className="inline-flex items-center gap-2 text-xs text-slate-500">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 pulse-dot" /> Live
-        </span>
+      <div className="mb-4">
+        <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Recent bookings</div>
+        <h3 className="mt-1 text-xl font-semibold text-slate-900">Who booked this day</h3>
       </div>
-      <ul className="divide-y divide-slate-100">
-        {entries.map(e => e.member && e.space && (
-          <li key={e.id} className="flex items-center gap-3 py-3">
-            <Avatar member={e.member} size={32} />
-            <div className="flex-1">
-              <div className="text-sm text-slate-900">
-                <span className="font-medium">{e.member.name}</span>{' '}
-                <span className="text-slate-500">{e.action}</span>{' '}
-                <span className="font-medium">{e.space.label}</span>
+      {entries.length === 0 ? (
+        <div className="py-8 text-center text-sm text-slate-500">No bookings for this day yet.</div>
+      ) : (
+        <ul className="divide-y divide-slate-100">
+          {entries.map(e => (
+            <li key={e.id} className="flex items-center gap-3 py-3">
+              <Avatar member={e.member} size={32} />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm text-slate-900">
+                  <span className="font-medium">{e.member.name}</span>{' '}
+                  <span className="text-slate-500">booked</span>{' '}
+                  <span className="font-medium">{e.space?.label ?? 'a removed space'}</span>
+                </div>
+                <div className="text-xs text-slate-500">
+                  {e.hours}{e.space?.zone ? ` · ${e.space.zone}` : ''}{e.unpaid ? ' · awaiting payment' : ''}
+                </div>
               </div>
-              <div className="text-xs text-slate-500">{e.member.plan} · {e.space.zone}</div>
-            </div>
-            <div className="font-mono text-[11px] text-slate-400">{e.when}</div>
-          </li>
-        ))}
-      </ul>
+              <div className="shrink-0 font-mono text-[11px] text-slate-400">{e.when}</div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }
@@ -436,7 +470,8 @@ export function AdminView() {
   const [searchQ,       setSearchQ]       = useState('')
   const [selectedSpace, setSelectedSpace] = useState<Space | null>(null)
   const [pendingPayments, setPendingPayments] = useState<PendingPayment[]>([])
-  const [dayRevenue,    setDayRevenue]    = useState<number | null>(null)
+  const [dayBookings,   setDayBookings]   = useState<DayBooking[]>([])
+  const [prevRevenue,   setPrevRevenue]   = useState<number | null>(null)
 
   useEffect(() => {
     if (!tenant) return
@@ -451,21 +486,21 @@ export function AdminView() {
       })
   }, [tenant?.id])
 
-  // Load real revenue for selected date
-  const dKeyForRevenue = dateKey(addDays(TODAY, dateOffset))
+  // Bookings for the selected date (names, times, revenue) + the day before for comparison
+  const dKeySelected = dateKey(addDays(TODAY, dateOffset))
+  const dKeyPrev     = dateKey(addDays(TODAY, dateOffset - 1))
   useEffect(() => {
     if (!tenant) return
-    sb.from('bookings')
-      .select('price')
-      .eq('tenant_id', tenant.id)
-      .eq('date', dKeyForRevenue)
-      .neq('status', 'cancelled')
-      .neq('payment_status', 'expired')
-      .then(({ data }: { data: { price: number }[] | null }) => {
-        if (data) setDayRevenue(data.reduce((sum, b) => sum + Number(b.price), 0))
-        else setDayRevenue(0)
-      })
-  }, [tenant?.id, dKeyForRevenue])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const live = (q: any) => q.eq('tenant_id', tenant.id).neq('status', 'cancelled').neq('payment_status', 'expired')
+    live(sb.from('bookings')
+      .select('id, user_id, space_id, start_hour, end_hour, price, payment_status, created_at, user:profiles(full_name, email)')
+      .eq('date', dKeySelected))
+      .then(({ data }: { data: DayBooking[] | null }) => setDayBookings(data ?? []))
+    live(sb.from('bookings').select('price').eq('date', dKeyPrev))
+      .then(({ data }: { data: { price: number }[] | null }) =>
+        setPrevRevenue(data ? data.reduce((sum, b) => sum + Number(b.price), 0) : null))
+  }, [tenant?.id, dKeySelected, dKeyPrev, app.occupancy])
 
   const date   = addDays(TODAY, dateOffset)
   const dKey   = dateKey(date)
@@ -478,8 +513,12 @@ export function AdminView() {
   const maintCount     = Object.values(day).filter(s => s.maintenance).length
   const occPct         = totalSpaces > 0 ? Math.round((occupiedCount / totalSpaces) * 100) : 0
 
-  const revenue  = dayRevenue ?? 0
-  const revDelta = 0  // delta vs yesterday requires a second query — placeholder for now
+  const revenue  = dayBookings.reduce((sum, b) => sum + Number(b.price), 0)
+  const revDelta = prevRevenue ? Math.round(((revenue - prevRevenue) / prevRevenue) * 100) : null
+
+  // Cumulative revenue by booking start hour, 8 AM → 4 PM (matches the card's axis)
+  const revPoints = Array.from({ length: 9 }, (_, i) =>
+    dayBookings.filter(b => b.start_hour <= 8 + i).reduce((sum, b) => sum + Number(b.price), 0))
 
   const zones = Array.from(new Set(spaces.map(s => s.zone)))
 
@@ -492,7 +531,8 @@ export function AdminView() {
     return true
   })
 
-  const activeUsers = Object.entries(day).filter(([, s]) => !s.maintenance).slice(0, 6).map(([, s]) => MEMBERS[s.memberIdx ?? 0])
+  const activeUsers = Array.from(new Map(dayBookings.map(b => [b.user_id, b])).values())
+    .map(b => toMember(b.user_id, b.user))
 
   return (
     <div className="mx-auto max-w-[1400px] px-8 pb-24 pt-10">
@@ -581,8 +621,8 @@ export function AdminView() {
       {/* Metric cards */}
       <section className="mt-10 grid grid-cols-12 gap-4">
         <OccupancyCard pct={occPct} occupied={occupiedCount} total={totalSpaces - maintCount} />
-        <RevenueCard   amount={revenue} delta={revDelta} />
-        <ActiveUsersCard users={activeUsers} count={occupiedCount} />
+        <RevenueCard   amount={revenue} delta={revDelta} points={revPoints} />
+        <ActiveUsersCard users={activeUsers} bookingCount={dayBookings.length} />
       </section>
 
       {/* Breakdown by type */}
@@ -722,7 +762,7 @@ export function AdminView() {
 
       {/* Activity + maintenance */}
       <section className="mt-8 grid grid-cols-12 gap-4">
-        <ActivityFeed     day={day} spaces={spaces} />
+        <ActivityFeed     bookings={dayBookings} spaces={spaces} />
         <MaintenanceQueue day={day} dKey={dKey} spaces={spaces} />
       </section>
 

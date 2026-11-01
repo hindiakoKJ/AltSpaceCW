@@ -1,7 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { AmenityItem, AppContextValue, Booking, BookingStatus, OccupancyMap, PaymentStatus, Space, StudioSettings, Subscription, ToastState, UserRole, ViewType } from '../types/app'
 import type { DbSpace, DbBooking, DbSubscription, DbStudioSettings } from '../types/database'
-import { ALL_SPACES } from '../lib/mockData'
 import { dateKey, fmtLongDate, parseKey } from '../lib/dateHelpers'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
@@ -37,7 +36,10 @@ function toAppSpace(db: DbSpace): Space {
 }
 
 function toAppBooking(db: DbBooking & { space?: DbSpace }): Booking {
-  const space = db.space ? toAppSpace(db.space) : ALL_SPACES.find(s => s.id === db.space_id)!
+  // Space join can come back empty if the space was removed — keep the booking visible
+  const space: Space = db.space
+    ? toAppSpace(db.space)
+    : { id: db.space_id, label: db.space_id, type: 'hot', zone: '', price: 0, hourly: 0 }
   const todayKey = dateKey(new Date())
   const status: BookingStatus = db.date >= todayKey ? 'upcoming' : 'past'
   const payment_status: PaymentStatus = db.payment_status ?? 'confirmed'
